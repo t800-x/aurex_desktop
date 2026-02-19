@@ -1,0 +1,1 @@
+<div class="page bg-amber-400 rounded-[8px] flex-1 shadow">Main Route</div>

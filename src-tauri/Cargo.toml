@@ -1,0 +1,32 @@
+[package]
+name = "aurex_desktop"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+
+[lib]
+name = "aurex_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["sync", "time"] }
+specta = { version = "2.0.0-rc" }
+tauri-specta = { version = "2.0.0-rc", features = ["derive", "typescript"] }
+specta-typescript = { version = "0.0.7" }
+
+#Using git instead of cargo for testing since upstream changes arent immediately pushed to cargo
+libaurex = {git = "https://github.com/libaurex/libaurex-rs", branch = "main"}
+lofty = "0.23.2"
+dirs = "6.0.0"
+walkdir = "2.5.0"
+rusqlite = {version = "0.38.0", features = ["bundled"] }
+thiserror = "2.0.18"
