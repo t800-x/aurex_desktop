@@ -35,6 +35,7 @@
         justify-content: center;
         padding-left: 25px;
         padding-right: 25px;
+        pointer-events: auto;
     }
 
 </style>

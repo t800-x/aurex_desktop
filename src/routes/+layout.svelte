@@ -1,6 +1,6 @@
 <script lang="ts">
   import "../app.css";
-  import "../colors.css"
+  import "../colors.css";
   import '@fontsource-variable/inter';
   import Navbar from "$lib/ui/navbar.svelte";
   import SongsPage from "./songs/songs-page.svelte";
@@ -8,31 +8,27 @@
   import ArtistsPage from "./artists/artists-page.svelte";
   import SearchPage from "./search/search-page.svelte";
   import NowPlaying from "$lib/ui/now-playing.svelte";
-  
+  import RightPane from "$lib/ui/right-pane.svelte";
+  import { router } from "$lib/router.svelte";
+
+  let rightPaneOpen = $derived(router.rightPaneContent !== null);
 </script>
 
 <div class="appRoot dark">
-    <Navbar />
-
-    <main class="mainContent">
+  <Navbar />
+  <div class="contentWrapper">
+    <main class="mainContent" class:blocked={rightPaneOpen}>
       <SongsPage />
       <AlbumsPage />
       <ArtistsPage />
       <SearchPage />
-
-      <div class="spacer">
-        <style>
-          .spacer {
-            height: 85px
-          }
-        </style>
-      </div>
-
       <NowPlaying />
     </main>
-    
 
-
+    <RightPane>
+      <p>Right pane content goes here</p>
+    </RightPane>
+  </div>
 </div>
 
 <style>
@@ -47,13 +43,25 @@
     flex-direction: row;
   }
 
+  .contentWrapper {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+    position: relative;
+  }
+
   .mainContent {
     display: flex;
     flex: 1;
     overflow: hidden;
     height: 100%;
-    isolation: isolate;
     position: relative;
+  }
+
+  .mainContent.blocked {
+    pointer-events: none;
+    user-select: none;
   }
 
   :global(body) {

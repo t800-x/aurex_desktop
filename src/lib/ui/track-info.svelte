@@ -41,7 +41,6 @@
     }
 
     .albumCover {
-        padding-left: 5px;
         height: 45px;
         width: 45px;
         border-radius: 10px;

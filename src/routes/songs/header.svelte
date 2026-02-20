@@ -19,16 +19,16 @@
     .header {
         height: 100px;
         flex-shrink: 0;
-        width: 100%;
+        width: calc(100% - 8px);
         border-bottom: 1px solid var(--color-divider);
         border-radius: 8px;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         background-color: var(--color-header);
-        position: sticky;
+        position: absolute;
         top: 0;
-        z-index: 1;
+        z-index: 100;
         backdrop-filter: blur(12px);
     }
 

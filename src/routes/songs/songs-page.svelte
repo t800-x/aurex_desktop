@@ -7,6 +7,7 @@
     import { onMount } from "svelte";
     import type { FullTrack } from '$lib/bindings';
     import { formatDuration } from "$lib/helpers";
+    import { VList } from "virtua/svelte";
 
     const section = Section.songs;
     let hidden = $derived(router.current !== section);
@@ -15,28 +16,67 @@
 
     onMount(async () => {
         tracks = await commands.getAllTracks();
-        console.log(tracks);
     });
 </script>
 
 <div style:display={displayMode} class:hidden = {hidden} class="page songsPage">
 
     <div class="tracklist">
-        <Header class="header"/>
 
-        {#each tracks as track, i}
-            <ListTile 
-                album={track.album_title}
-                artist={track.artist_name}
-                title={track.track.title}
-                time={formatDuration(track.track.duration)}
-                index={i}
-                onclick={async () =>  {
-                    await commands.load(track);
-                    commands.play();
-                }}
-            />
-        {/each}
+        <Header />
+
+        <VList data={tracks} style='height: 100%' getKey={(_, i) => i}>
+            {#snippet children(track, i)}
+                {#if i === 0}
+                    <div class="h-[100px]">
+                    </div>
+
+                    <ListTile 
+                        album={track.album_title}
+                        artist={track.artist_name}
+                        title={track.track.title}
+                        time={formatDuration(track.track.duration)}
+                        index={i}
+                        onclick={async () =>  {
+                            await commands.load(track);
+                            commands.play();
+                        }}
+                    />
+                    <div class="h-[2px]"></div>
+
+                {:else if i === tracks.length -1 }
+                    <ListTile 
+                        album={track.album_title}
+                        artist={track.artist_name}
+                        title={track.track.title}
+                        time={formatDuration(track.track.duration)}
+                        index={i-1}
+                        onclick={async () =>  {
+                            await commands.load(track);
+                            commands.play();
+                        }}
+                    />
+
+                    <div class="h-[80px]"></div>
+                {:else}
+                    <ListTile 
+                        album={track.album_title}
+                        artist={track.artist_name}
+                        title={track.track.title}
+                        time={formatDuration(track.track.duration)}
+                        index={i}
+                        onclick={async () =>  {
+                            await commands.load(track);
+                            commands.play();
+                        }}
+                    />
+
+                    <div class="h-[2px]"></div>
+                {/if}
+
+                
+            {/snippet}
+        </VList>
 
     </div>
 </div>
@@ -53,11 +93,11 @@
 
     .tracklist {
         flex: 1;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
+        overflow: hidden;
+        height: 100%;
         width: 100%;
-        gap: 2px;
+        isolation: isolate;
+        position: relative;
     }
 
 </style>

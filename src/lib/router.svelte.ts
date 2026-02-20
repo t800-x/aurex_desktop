@@ -21,7 +21,7 @@ class Router {
         console.log("Current Section: " + this.current);
     }
 
-    setRightPaneContent(content: RightPaneContent): void {
+    setRightPaneContent(content: RightPaneContent | null): void {
         if (content == this.rightPaneContent) {
             this.rightPaneContent = null;
             return;

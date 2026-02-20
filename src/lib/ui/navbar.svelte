@@ -4,7 +4,7 @@
     import ArtistsIcon from "$lib/icons/artists-icon.svelte";
     import NavbarItem from "./navbar-item.svelte";
     import NavbarLabel from "./navbar-label.svelte";
-    import { Section } from "$lib/router.svelte";
+    import { RightPaneContent, router, Section } from "$lib/router.svelte";
     import Button from "$lib/components/ui/button/button.svelte";
     import { commands } from "$lib/bindings";
 
@@ -38,6 +38,7 @@
     {/each}
 
     <Button onclick={async () => commands.index()}>Index</Button>
+    <Button onclick={() => router.setRightPaneContent(RightPaneContent.queue)} >Toggle pane</Button>
 </div>
  
 
