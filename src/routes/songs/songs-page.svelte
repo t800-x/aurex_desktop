@@ -17,6 +17,10 @@
     onMount(async () => {
         tracks = await commands.getAllTracks();
     });
+
+    async function playList(index: number): Promise<void> {
+        commands.playList(tracks, index);
+    }
 </script>
 
 <div style:display={displayMode} class:hidden = {hidden} class="page songsPage">
@@ -38,8 +42,8 @@
                         time={formatDuration(track.track.duration)}
                         index={i}
                         onclick={async () =>  {
-                            await commands.load(track);
-                            commands.play();
+                            console.log("clicked", i);
+                            playList(i);
                         }}
                     />
                     <div class="h-[2px]"></div>
@@ -52,8 +56,8 @@
                         time={formatDuration(track.track.duration)}
                         index={i-1}
                         onclick={async () =>  {
-                            await commands.load(track);
-                            commands.play();
+                            console.log("clicked", i);
+                            playList(i);
                         }}
                     />
 
@@ -66,8 +70,8 @@
                         time={formatDuration(track.track.duration)}
                         index={i}
                         onclick={async () =>  {
-                            await commands.load(track);
-                            commands.play();
+                            console.log("clicked", i);
+                            playList(i);
                         }}
                     />
 

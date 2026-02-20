@@ -11,13 +11,13 @@
   import RightPane from "$lib/ui/right-pane.svelte";
   import { router } from "$lib/router.svelte";
 
-  let rightPaneOpen = $derived(router.rightPaneContent !== null);
+  let blocked = $derived(router.rightPaneContent !== null && router.rightPaneOverlaying);
 </script>
 
 <div class="appRoot dark">
   <Navbar />
   <div class="contentWrapper">
-    <main class="mainContent" class:blocked={rightPaneOpen}>
+    <main class="mainContent" class:blocked={blocked}>
       <SongsPage />
       <AlbumsPage />
       <ArtistsPage />
@@ -25,9 +25,7 @@
       <NowPlaying />
     </main>
 
-    <RightPane>
-      <p>Right pane content goes here</p>
-    </RightPane>
+    <RightPane/>
   </div>
 </div>
 

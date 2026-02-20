@@ -59,9 +59,9 @@ async load(track: FullTrack) : Promise<Result<AudioPlayer, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async changeQueueIndex(oldIndex: bigint, newIndex: bigint) : Promise<Result<AudioPlayer, string>> {
+async changeQueueIndex(oldIdx: number, newIdx: number) : Promise<Result<AudioPlayer, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("change_queue_index", { oldIndex, newIndex }) };
+    return { status: "ok", data: await TAURI_INVOKE("change_queue_index", { oldIdx, newIdx }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -83,9 +83,9 @@ async playNext(track: FullTrack) : Promise<Result<AudioPlayer, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async playList(list: FullTrack[], index: bigint) : Promise<Result<AudioPlayer, string>> {
+async playList(list: FullTrack[], idx: number) : Promise<Result<AudioPlayer, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("play_list", { list, index }) };
+    return { status: "ok", data: await TAURI_INVOKE("play_list", { list, idx }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

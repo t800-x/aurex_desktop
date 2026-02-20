@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { router } from '$lib/router.svelte';
-  let isOverlay = $state(false);
+  import { RightPaneContent, router } from '$lib/router.svelte';
+    import Queue from './queue.svelte';
+    import Lyrics from './lyrics.svelte';
+
   function checkWidth() {
-    isOverlay = window.innerWidth < 1200;
+    router.rightPaneOverlaying = window.innerWidth < 1200;
   }
   let rightPaneOpen = $derived(router.rightPaneContent !== null);
   onMount(() => {
@@ -14,19 +16,33 @@
   function closePane() {
     router.setRightPaneContent(null);
   }
+
+  let isQueue = $derived(router.rightPaneContent === RightPaneContent.queue);
 </script>
-{#if isOverlay && rightPaneOpen}
+
+
+{#if router.rightPaneOverlaying && rightPaneOpen}
   <div class="backdrop" onclick={closePane} aria-hidden="true"></div>
 {/if}
 <aside
   class="rightPane"
   class:open={rightPaneOpen}
-  class:overlay={isOverlay}
+  class:overlay={router.rightPaneOverlaying}
 >
+
+
   <div class="rightPaneInner">
-    <slot />
+      <div style:display={isQueue ? 'contents' : 'none'}>
+          <Queue />
+      </div>
+      <div style:display={isQueue ? 'none' : 'contents'}>
+          <Lyrics />
+      </div>
   </div>
+
 </aside>
+
+
 <style>
   .backdrop {
     position: absolute;
@@ -39,10 +55,12 @@
     width: 0;
     overflow: hidden;
     height: 100%;
-    background-color: #2a2a2a;
+    background-color: var(--color-header);
     border-left: 1px solid rgba(255, 255, 255, 0.08);
     transition: width 0.3s ease;
     flex-shrink: 0;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
   }
   .rightPane.open {
     width: 320px;

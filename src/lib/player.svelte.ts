@@ -16,7 +16,7 @@ export type PlayerState = typeof PlayerState[keyof typeof PlayerState]
 class PlayerManager {
     currentlyPlaying = $state<FullTrack | null>(null);
     state = $state<PlayerState>(PlayerState.Empty);
-    queue = $state<FullTrack[] | null>(null);
+    queue = $state<FullTrack[]>([]);
     position = $state<number>(0.0);
 
     private async init() {
@@ -45,9 +45,12 @@ class PlayerManager {
             if (!areArraysEqual(this.queue ?? [], newPlayer.queue ?? [])) {
                 this.queue = newPlayer.queue;
             }
+        });
 
-            if (this.position !== newPlayer.position) {
-                this.position = newPlayer.position;
+        await listen<number> ('progress-changed', (event) => {
+            let postion = event.payload;
+            if (this.position !== postion) {
+                this.position = postion;
             }
         });
     }

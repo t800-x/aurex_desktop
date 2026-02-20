@@ -4,12 +4,15 @@
     import { PlayerState } from "$lib/player.svelte";
     import PlaybackControls from "./playback-controls.svelte";
     import TrackInfo from "./track-info.svelte";
+    import PaneControls from "./pane-controls.svelte";
 
 </script>
 
 <div class="nowPlaying">
     <PlaybackControls />
+    <div class="w-[10px]"> </div>
     <TrackInfo />
+    <PaneControls />
 </div>
 
 <style>

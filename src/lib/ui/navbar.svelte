@@ -38,7 +38,6 @@
     {/each}
 
     <Button onclick={async () => commands.index()}>Index</Button>
-    <Button onclick={() => router.setRightPaneContent(RightPaneContent.queue)} >Toggle pane</Button>
 </div>
  
 

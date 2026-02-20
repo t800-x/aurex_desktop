@@ -70,11 +70,7 @@ pub fn track_progress(app_handle: AppHandle) {
 
             let progress = audio_engine.get_progress().await.unwrap();
 
-            player_state
-                .update(move |player| {
-                    player.position = progress;
-                })
-                .await;
+            _ = app_handle.emit("progress-changed", progress);
 
             _ = tokio::time::sleep(Duration::from_millis(250)).await;
         }
@@ -192,23 +188,22 @@ pub async fn clear(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer
 #[specta::specta]
 pub async fn play_list(
     state: tauri::State<'_, ManagedPlayer>,
-    list: Vec<FullTrack>,
-    mut index: usize,
+    mut list: Vec<FullTrack>,
+    idx: i32,
 ) -> Result<AudioPlayer, String> {
-    let mut player = state.get().await;
-    player.queue.clear();
 
-    while index < player.queue.len() {
-        player.queue.push_back(list[index].clone());
-        index += 1;
-    }
+    let mut index = idx as usize;
 
-    state.update(|_p| {}).await;
-
-    if let Some(track) = player.queue.pop_front() {
-        _ = load(state.clone(), track).await;
-        _ = play(state.clone()).await;
-    }
+    let first_track = list.remove(index);
+    _ = load(state.clone(), first_track).await;
+    _ = play(state.clone()).await;
+    
+    state.update(|player| {
+        while index < list.len()  {
+            player.queue.push_back(list[index].clone());
+            index += 1;
+        }
+    }).await;
 
     Ok(state.get().await)
 }
@@ -261,9 +256,12 @@ pub async fn next(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer,
 #[specta::specta]
 pub async fn change_queue_index(
     state: tauri::State<'_, ManagedPlayer>,
-    old_index: usize,
-    mut new_index: usize,
+    old_idx: i32,
+    new_idx: i32,
 ) -> Result<AudioPlayer, String> {
+    let old_index = old_idx as usize;
+    let mut new_index = new_idx as usize;
+
     state
         .update(|player| {
             if old_index < new_index {

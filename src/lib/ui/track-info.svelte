@@ -43,7 +43,7 @@
     .albumCover {
         height: 45px;
         width: 45px;
-        border-radius: 10px;
+        border-radius: 8px;
         border-color: var(--color-divider);
         border-width: 1px;
         box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
