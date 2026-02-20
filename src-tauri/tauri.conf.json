@@ -14,7 +14,8 @@
       {
         "title": "aurex_desktop",
         "width": 1200,
-        "height": 700
+        "height": 700,
+        "backgroundColor": "#202020"
       }
     ],
     "security": {

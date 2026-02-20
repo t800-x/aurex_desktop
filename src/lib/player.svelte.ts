@@ -4,14 +4,14 @@ import type { FullTrack } from "./bindings";
 import { commands } from "./bindings";
 import { areArraysEqual } from "./helpers";
 
-const PlayerState = {
+export const PlayerState = {
   Paused: "Paused",
   Playing: "Playing",
   Empty: "Empty",
   Stopped: "Stopped"
 } as const
 
-type PlayerState = typeof PlayerState[keyof typeof PlayerState]
+export type PlayerState = typeof PlayerState[keyof typeof PlayerState]
 
 class PlayerManager {
     currentlyPlaying = $state<FullTrack | null>(null);
@@ -44,6 +44,10 @@ class PlayerManager {
                 this.queue = newPlayer.queue;
             }
         });
+    }
+
+    constructor() {
+        this.init();
     }
 }
 
