@@ -38,6 +38,7 @@
         border-radius: 6px;
         align-items: center;
         background-color: var(--color-hover);
+        cursor: default;
     }
 
     .tile:hover {

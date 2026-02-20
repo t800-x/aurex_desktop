@@ -5,6 +5,8 @@
     import NavbarItem from "./navbar-item.svelte";
     import NavbarLabel from "./navbar-label.svelte";
     import { Section } from "$lib/router.svelte";
+    import Button from "$lib/components/ui/button/button.svelte";
+    import { commands } from "$lib/bindings";
 
 
     const width = 268;
@@ -34,6 +36,8 @@
     {#each items as item}
         <NavbarItem Icon={item.icon} section={item.section} text={item.title}/>
     {/each}
+
+    <Button onclick={async () => commands.index()}>Index</Button>
 </div>
  
 

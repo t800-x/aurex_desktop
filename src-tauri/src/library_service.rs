@@ -18,7 +18,6 @@ pub fn library_service() -> &'static Mutex<LibraryService> {
     })
 }
 
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -61,7 +60,9 @@ impl LibraryService {
         conn.execute_batch("PRAGMA foreign_keys = ON;")?;
         Self::run_migrations(&conn)?;
 
-        Ok(Self { conn: Mutex::new(conn) })
+        Ok(Self {
+            conn: Mutex::new(conn),
+        })
     }
 
     /// Open an in-memory database — useful for tests.
@@ -69,7 +70,9 @@ impl LibraryService {
         let conn = Connection::open_in_memory()?;
         conn.execute_batch("PRAGMA foreign_keys = ON;")?;
         Self::run_migrations(&conn)?;
-        Ok(Self { conn: Mutex::new(conn) })
+        Ok(Self {
+            conn: Mutex::new(conn),
+        })
     }
 
     fn lock(&self) -> MutexGuard<Connection> {
@@ -81,7 +84,8 @@ impl LibraryService {
     // -----------------------------------------------------------------------
 
     fn run_migrations(conn: &Connection) -> Result<()> {
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             CREATE TABLE IF NOT EXISTS artists (
                 id      INTEGER PRIMARY KEY AUTOINCREMENT,
                 name    TEXT    NOT NULL UNIQUE,
@@ -131,7 +135,8 @@ impl LibraryService {
                 FOREIGN KEY (playlist_id) REFERENCES playlists (id) ON DELETE CASCADE,
                 FOREIGN KEY (track_id)    REFERENCES tracks    (id) ON DELETE CASCADE
             );
-        ")?;
+        ",
+        )?;
         Ok(())
     }
 
@@ -158,12 +163,9 @@ impl LibraryService {
         lyrics: Option<&str>,
         composer: Option<&str>,
     ) -> Result<()> {
-
         let conn = self.lock();
 
-        let effective_album_artist = album_artist
-            .or(artist_name)
-            .unwrap_or("Unknown Artist");
+        let effective_album_artist = album_artist.or(artist_name).unwrap_or("Unknown Artist");
 
         let effective_album_title = album_title.unwrap_or("Unknown Album");
 
@@ -172,9 +174,7 @@ impl LibraryService {
 
         // 2. Upsert the track artist (may differ from album artist on features/compilations).
         let track_artist_id = match artist_name {
-            Some(name) if name != effective_album_artist => {
-                upsert_artist(&conn, name, genre)?
-            }
+            Some(name) if name != effective_album_artist => upsert_artist(&conn, name, genre)?,
             _ => album_artist_id,
         };
 
@@ -240,7 +240,11 @@ impl LibraryService {
     pub fn get_artist_by_id(&self, id: i64) -> Result<Option<Artist>> {
         let conn = self.lock();
         let result = conn
-            .query_row("SELECT * FROM artists WHERE id = ?1", params![id], Artist::from_row)
+            .query_row(
+                "SELECT * FROM artists WHERE id = ?1",
+                params![id],
+                Artist::from_row,
+            )
             .optional()?;
         Ok(result)
     }
@@ -259,16 +263,19 @@ impl LibraryService {
     pub fn get_album_by_id(&self, id: i64) -> Result<Option<Album>> {
         let conn = self.lock();
         let result = conn
-            .query_row("SELECT * FROM albums WHERE id = ?1", params![id], Album::from_row)
+            .query_row(
+                "SELECT * FROM albums WHERE id = ?1",
+                params![id],
+                Album::from_row,
+            )
             .optional()?;
         Ok(result)
     }
 
     pub fn get_albums_by_artist(&self, artist_id: i64) -> Result<Vec<Album>> {
         let conn = self.lock();
-        let mut stmt = conn.prepare(
-            "SELECT * FROM albums WHERE artist_id = ?1 ORDER BY year DESC",
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT * FROM albums WHERE artist_id = ?1 ORDER BY year DESC")?;
         let rows = stmt.query_map(params![artist_id], Album::from_row)?;
         rows.map(|r| r.map_err(Into::into)).collect()
     }
@@ -315,7 +322,11 @@ impl LibraryService {
     pub fn get_track_by_id(&self, id: i64) -> Result<Option<Track>> {
         let conn = self.lock();
         let result = conn
-            .query_row("SELECT * FROM tracks WHERE id = ?1", params![id], Track::from_row)
+            .query_row(
+                "SELECT * FROM tracks WHERE id = ?1",
+                params![id],
+                Track::from_row,
+            )
             .optional()?;
         Ok(result)
     }

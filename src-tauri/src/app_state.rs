@@ -1,26 +1,21 @@
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use tauri::{AppHandle, Emitter};
+use tokio::sync::Mutex;
 
 use specta::Type;
 
 // <------------State------------>
 #[derive(Clone, Serialize, Deserialize, Debug, Type)]
 pub struct AppState {
-    clicks: i32
+    clicks: i32,
 }
 
 impl Default for AppState {
     fn default() -> Self {
-        AppState { 
-            clicks: 0 
-        }
+        AppState { clicks: 0 }
     }
 }
-
-
-
 
 // <------------Commands------------>
 #[tauri::command]
@@ -32,9 +27,11 @@ pub async fn get_state(state: tauri::State<'_, ManagedState>) -> Result<AppState
 #[tauri::command]
 #[specta::specta]
 pub async fn increment_click(state: tauri::State<'_, ManagedState>) -> Result<(), String> {
-    state.update(|s| {
-        s.clicks += 1;
-    }).await;
+    state
+        .update(|s| {
+            s.clicks += 1;
+        })
+        .await;
 
     Ok(())
 }
@@ -42,32 +39,31 @@ pub async fn increment_click(state: tauri::State<'_, ManagedState>) -> Result<()
 #[tauri::command]
 #[specta::specta]
 pub async fn reset_clicks(state: tauri::State<'_, ManagedState>) -> Result<(), String> {
-    state.update(|s| {
-        s.clicks = 0;
-    }).await;
+    state
+        .update(|s| {
+            s.clicks = 0;
+        })
+        .await;
 
     Ok(())
 }
 
-
-
-
 // <------------Manager------------>
 pub struct ManagedState {
     pub state: Arc<Mutex<AppState>>,
-    pub app: AppHandle
+    pub app: AppHandle,
 }
 
 impl ManagedState {
     pub fn new(app: AppHandle) -> Self {
-        Self { 
+        Self {
             state: Arc::new(Mutex::new(AppState::default())),
-            app
+            app,
         }
     }
 
     pub async fn update<F>(&self, updater: F)
-    where 
+    where
         F: FnOnce(&mut AppState),
     {
         let mut state = self.state.lock().await;

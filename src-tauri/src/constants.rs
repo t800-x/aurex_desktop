@@ -16,7 +16,7 @@ pub fn app_cache() -> PathBuf {
 }
 
 pub fn dir_file() -> PathBuf {
-   app_data().join("directories.txt")
+    app_data().join("directories.txt")
 }
 
 pub fn cover_cache() -> PathBuf {

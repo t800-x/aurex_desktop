@@ -3,11 +3,13 @@
     import { commands } from "$lib/bindings";
     import { PlayerState } from "$lib/player.svelte";
     import PlaybackControls from "./playback-controls.svelte";
+    import TrackInfo from "./track-info.svelte";
 
 </script>
 
 <div class="nowPlaying">
     <PlaybackControls />
+    <TrackInfo />
 </div>
 
 <style>
@@ -30,8 +32,9 @@
         box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
+        justify-content: center;
         padding-left: 25px;
         padding-right: 25px;
     }
-    
+
 </style>

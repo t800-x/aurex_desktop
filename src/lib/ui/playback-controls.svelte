@@ -9,6 +9,7 @@
     import NextIcon from "$lib/icons/next-icon.svelte";
     import LoopIcon from "$lib/icons/loop-icon.svelte";
     import PlayIcon from "$lib/icons/play-icon.svelte";
+    import PoppingButton from './popping-button.svelte';
 
     let isPlaying = $derived(audioPlayer.state == PlayerState.Playing);
 </script>
@@ -19,9 +20,9 @@
     </button>
 
     <button class="playbackControlButton primaryControl">
-        <span class="icon" in:scale={{ duration: 200, start: 0.5 }} out:scale={{ duration: 150, start: 0.5 }}>
+        <PoppingButton>
             <PreviousIcon />
-        </span>
+        </PoppingButton>
     </button>
 
     <button 
@@ -29,20 +30,20 @@
     class="playbackControlButton primaryControl"
     >
         {#if isPlaying}
-            <span class="icon" in:scale={{ duration: 200, start: 0.5 }} out:scale={{ duration: 150, start: 0.5 }}>
+            <PoppingButton>
                 <PauseIcon />
-            </span>
+            </PoppingButton>
         {:else}
-            <span class="icon" in:scale={{ duration: 200, start: 0.5 }} out:scale={{ duration: 150, start: 0.5 }}>
-            <PlayIcon />
-            </span>
+            <PoppingButton>
+                <PlayIcon />
+            </PoppingButton>
         {/if}
     </button>
 
     <button class="playbackControlButton primaryControl">
-        <span class="icon" in:scale={{ duration: 200, start: 0.5 }} out:scale={{ duration: 150, start: 0.5 }}>
+        <PoppingButton>
             <NextIcon />
-        </span>
+        </PoppingButton>
     </button>
 
     <button class="playbackControlButton secondaryControl">
@@ -52,6 +53,7 @@
 
 <style>
     .playbackControls {
+        flex: 25;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -89,13 +91,5 @@
 
     .primaryControl:active {
         transform: scale(0.92);
-    }
-
-
-    .icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
     }
 </style>

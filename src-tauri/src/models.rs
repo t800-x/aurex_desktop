@@ -1,6 +1,6 @@
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
-use specta::{Type, specta};
+use specta::{specta, Type};
 
 // ---------------------------------------------------------------------------
 // Artist
@@ -8,7 +8,7 @@ use specta::{Type, specta};
 
 #[derive(Clone, Serialize, Deserialize, Debug, Type)]
 pub struct Artist {
-    pub id: Option<i64>, 
+    pub id: Option<i64>,
     pub name: String,
     pub genre: Option<String>,
 }
@@ -42,7 +42,9 @@ impl Album {
         Ok(Self {
             id: row.get("id")?,
             artist_id: row.get("artist_id")?,
-            title: row.get::<_, Option<String>>("title")?.unwrap_or_else(|| "Unknown Album".into()),
+            title: row
+                .get::<_, Option<String>>("title")?
+                .unwrap_or_else(|| "Unknown Album".into()),
             year: row.get::<_, Option<i64>>("year")?.unwrap_or(0),
             genre: row.get("genre")?,
             album_art: row.get("album_art")?,
@@ -64,7 +66,7 @@ pub struct Track {
     pub track_number: i64,
     pub disc_number: i64,
     pub bpm: i64,
-    pub duration: i64, 
+    pub duration: i64,
     pub initial_key: Option<String>,
     pub isrc: Option<String>,
     pub lyrics: Option<String>,
@@ -78,7 +80,9 @@ impl Track {
             album_id: row.get("album_id")?,
             artist_id: row.get("artist_id")?,
             file_path: row.get("file_path")?,
-            title: row.get::<_, Option<String>>("title")?.unwrap_or_else(|| "Unknown Title".into()),
+            title: row
+                .get::<_, Option<String>>("title")?
+                .unwrap_or_else(|| "Unknown Title".into()),
             track_number: row.get::<_, Option<i64>>("track_number")?.unwrap_or(0),
             disc_number: row.get::<_, Option<i64>>("disc_number")?.unwrap_or(1),
             bpm: row.get::<_, Option<i64>>("bpm")?.unwrap_or(0),
@@ -125,8 +129,12 @@ impl FullTrack {
     pub fn from_row(row: &Row) -> rusqlite::Result<Self> {
         Ok(Self {
             track: Track::from_row(row)?,
-            artist_name: row.get::<_, Option<String>>("artist_name")?.unwrap_or_else(|| "Unknown Artist".into()),
-            album_title: row.get::<_, Option<String>>("album_title")?.unwrap_or_else(|| "Unknown Album".into()),
+            artist_name: row
+                .get::<_, Option<String>>("artist_name")?
+                .unwrap_or_else(|| "Unknown Artist".into()),
+            album_title: row
+                .get::<_, Option<String>>("album_title")?
+                .unwrap_or_else(|| "Unknown Album".into()),
             album_art: row.get("album_art")?,
             playlist_position: row.get("position").ok(), // only present in playlist queries
         })

@@ -17,6 +17,7 @@ class PlayerManager {
     currentlyPlaying = $state<FullTrack | null>(null);
     state = $state<PlayerState>(PlayerState.Empty);
     queue = $state<FullTrack[] | null>(null);
+    position = $state<number>(0.0);
 
     private async init() {
         const result = await commands.getPlayer();
@@ -27,6 +28,7 @@ class PlayerManager {
             this.currentlyPlaying = player.currently_playing;
             this.queue = player.queue;
             this.state = player.state;
+            this.position = player.position;
         }
 
         await listen<AudioPlayer>('player-changed', (event) => {
@@ -40,8 +42,12 @@ class PlayerManager {
                 this.state = newPlayer.state;
             }
 
-            if (areArraysEqual(this.queue ?? [], newPlayer.queue ?? [])) {
+            if (!areArraysEqual(this.queue ?? [], newPlayer.queue ?? [])) {
                 this.queue = newPlayer.queue;
+            }
+
+            if (this.position !== newPlayer.position) {
+                this.position = newPlayer.position;
             }
         });
     }

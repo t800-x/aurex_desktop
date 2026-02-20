@@ -19,7 +19,11 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["C:\\Users\\*\\AppData\\Local\\.aurex\\**", "$HOME/**"]
+      }
     }
   },
   "bundle": {
