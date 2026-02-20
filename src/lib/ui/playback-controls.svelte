@@ -40,7 +40,7 @@
         {/if}
     </button>
 
-    <button class="playbackControlButton primaryControl">
+    <button class="playbackControlButton primaryControl" onclick={async () => commands.next()}>
         <PoppingButton>
             <NextIcon />
         </PoppingButton>

@@ -64,7 +64,7 @@ pub fn audio_player() -> &'static Mutex<Arc<Player>> {
 
 pub fn track_progress(app_handle: AppHandle) {
     tauri::async_runtime::spawn(async move {
-        let player_state = app_handle.state::<ManagedPlayer>();
+
         loop {
             let audio_engine = audio_player().lock().await;
 
@@ -241,8 +241,11 @@ pub async fn add_to_queue(
 #[tauri::command]
 #[specta::specta]
 pub async fn next(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer, String> {
-    let track = state.get().await.queue.pop_front();
-    state.update(|_p| {}).await;
+    let mut track: Option<FullTrack> = None;
+
+    state.update(|player|  {
+        track = player.queue.pop_front();
+    }).await;
 
     if let Some(t) = track {
         _ = load(state.clone(), t).await;
