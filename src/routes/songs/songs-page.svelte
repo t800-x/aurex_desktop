@@ -42,7 +42,6 @@
                         time={formatDuration(track.track.duration)}
                         index={i}
                         onclick={async () =>  {
-                            console.log("clicked", i);
                             playList(i);
                         }}
                     />
@@ -56,7 +55,6 @@
                         time={formatDuration(track.track.duration)}
                         index={i-1}
                         onclick={async () =>  {
-                            console.log("clicked", i);
                             playList(i);
                         }}
                     />
@@ -70,7 +68,6 @@
                         time={formatDuration(track.track.duration)}
                         index={i}
                         onclick={async () =>  {
-                            console.log("clicked", i);
                             playList(i);
                         }}
                     />

@@ -16,14 +16,30 @@
         onclick?: (e: MouseEvent) => void;
     } = $props();
 
+    import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
+
 </script>
 
-<div onclick={onclick} class="tile" class:even = {index % 2 === 0}>
-    <span class="infoLabel" style:flex={4}>{title}</span>
-    <span class="infoLabel" style:flex={1}>{time}</span>
-    <span class="infoLabel" style:flex={3}>{artist}</span>
-    <span class="infoLabel" style:flex={3}>{album}</span>
-</div>
+<ContextMenu.Root>
+    <ContextMenu.Trigger>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div onclick={onclick} class="tile" class:even = {index % 2 === 0}>
+            <span class="infoLabel" style:flex={4}>{title}</span>
+            <span class="infoLabel" style:flex={1}>{time}</span>
+            <span class="infoLabel" style:flex={3}>{artist}</span>
+            <span class="infoLabel" style:flex={3}>{album}</span>
+        </div>
+    </ContextMenu.Trigger>
+
+    <ContextMenu.Content onInteractOutside={(e) => e.stopPropagation()}>
+        <ContextMenu.Item>Play</ContextMenu.Item>
+        <ContextMenu.Item>Play from here</ContextMenu.Item>
+        <ContextMenu.Item>Play Next</ContextMenu.Item>
+        <ContextMenu.Item>Add to Queue</ContextMenu.Item>
+    </ContextMenu.Content>
+
+</ContextMenu.Root>
 
 <style>
     .tile {

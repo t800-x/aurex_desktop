@@ -135,14 +135,15 @@ pub async fn play(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer,
     let playerstate = state.get().await.state;
 
     if (playerstate != PlayerState::Playing) && (playerstate != PlayerState::Empty) {
-        let player = audio_player().lock().await;
-        _ = player.play().await;
-
-        state
-            .update(|s| {
+        state.update(|s| {
                 s.state = PlayerState::Playing;
             })
             .await;
+
+        let player = audio_player().lock().await;
+        _ = player.play().await;
+
+        
     }
 
     Ok(state.get().await)
@@ -154,14 +155,14 @@ pub async fn pause(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer
     let player = state.get().await;
 
     if player.state != PlayerState::Paused {
-        let audio_engine = audio_player().lock().await;
-        _ = audio_engine.pause().await;
-
-        state
-            .update(|s| {
+        state.update(|s| {
                 s.state = PlayerState::Paused;
             })
             .await;
+
+        let audio_engine = audio_player().lock().await;
+        _ = audio_engine.pause().await;
+  
     }
 
     Ok(state.get().await)
