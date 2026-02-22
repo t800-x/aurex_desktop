@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { LineLyrics } from "$lib/bindings";
     import { commands } from "$lib/bindings";
+    import { audioPlayer } from "$lib/player.svelte";
 
     let {
         lyrics,
@@ -31,6 +32,7 @@
         width: 100%;
         transform: scale(0.8);
         transform-origin: left center;
+        filter: blur(2px);
         border-radius: 8px;
         cursor: default;
         /* active -> inactive: slow */
@@ -44,6 +46,7 @@
     .active {
         transform: scale(0.9);
         color: rgba(255, 255, 255, 0.93);
+        filter: none;
         /* inactive -> active: fast */
         transition: transform 0.15s ease-out, color 0.15s ease-out;
     }
