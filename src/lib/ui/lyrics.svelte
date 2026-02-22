@@ -27,7 +27,7 @@
         if (!activeEl || !listEl || !innerEl) return;
 
         const containerHeight = listEl.getBoundingClientRect().height;
-        const newOffset = Math.max(0, activeEl.offsetTop - containerHeight * 0.35);
+        const newOffset = Math.max(0, activeEl.offsetTop - containerHeight * 0.1);
         const delta = newOffset - scrollOffset;
         scrollOffset = newOffset;
 
