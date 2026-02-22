@@ -1,41 +1,23 @@
 <script lang="ts">
     import type { LineLyrics } from "$lib/bindings";
-    import { audioPlayer } from "$lib/player.svelte";
     import { commands } from "$lib/bindings";
 
     let {
         lyrics,
-        index
+        active = false,
     } : {
         lyrics: LineLyrics;
-        index: number
+        active?: boolean;
     } = $props();
-
-    let active = $state(false);
-    let isInTimeFrame = $derived(audioPlayer.position >= lyrics.start_time && audioPlayer.position <= lyrics.end_time!);
-    let idxNull = $derived(audioPlayer.lyricsLineIndex === null);
-    let isIdx = $derived(audioPlayer.lyricsLineIndex === index);
-
-    $effect(() => {
-        if (lyrics.end_time !== null) {
-            if (isInTimeFrame) {
-                active = true;
-                if (idxNull) {
-                    audioPlayer.lyricsLineIndex = index;
-                }
-            } else {
-                active = false;
-                if (isIdx) {
-                    audioPlayer.lyricsLineIndex = null;
-                }
-            }
-        }
-    });
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<div onclick={() => commands.seek(lyrics.start_time)} class:active={active} class="tile">
+<div
+    onclick={() => commands.seek(lyrics.start_time)}
+    class:active
+    class="tile"
+>
     {lyrics.line}
 </div>
 
@@ -51,8 +33,8 @@
         transform-origin: left center;
         border-radius: 8px;
         cursor: default;
-
-        transition: transform 0.25s ease-in-out, color 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        /* active -> inactive: slow */
+        transition: transform 0.4s ease-in-out, color 0.4s ease-in-out;
     }
 
     .tile:hover {
@@ -61,7 +43,8 @@
 
     .active {
         transform: scale(0.9);
-        color: rgba(255, 255, 255, 9.3);
+        color: rgba(255, 255, 255, 0.93);
+        /* inactive -> active: fast */
+        transition: transform 0.15s ease-out, color 0.15s ease-out;
     }
 </style>
-
