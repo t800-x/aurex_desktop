@@ -36,12 +36,9 @@
                     </div>
 
                     <ListTile 
-                        album={track.album_title}
-                        artist={track.artist_name}
-                        title={track.track.title}
-                        time={formatDuration(track.track.duration)}
+                        track={track}
                         index={i}
-                        onclick={async () =>  {
+                        playList={async () =>  {
                             playList(i);
                         }}
                     />
@@ -49,12 +46,9 @@
 
                 {:else if i === tracks.length -1 }
                     <ListTile 
-                        album={track.album_title}
-                        artist={track.artist_name}
-                        title={track.track.title}
-                        time={formatDuration(track.track.duration)}
+                        track={track}
                         index={i-1}
-                        onclick={async () =>  {
+                        playList={async () =>  {
                             playList(i);
                         }}
                     />
@@ -62,12 +56,9 @@
                     <div class="h-[80px]"></div>
                 {:else}
                     <ListTile 
-                        album={track.album_title}
-                        artist={track.artist_name}
-                        title={track.track.title}
-                        time={formatDuration(track.track.duration)}
+                        track={track}
                         index={i}
-                        onclick={async () =>  {
+                        playList={async () =>  {
                             playList(i);
                         }}
                     />

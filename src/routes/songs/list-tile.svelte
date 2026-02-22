@@ -1,42 +1,52 @@
 <script lang="ts">
 
+    import type { FullTrack } from "$lib/bindings";
+    import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
+    import { commands } from "$lib/bindings";
+    import { formatDuration } from "$lib/helpers";
+    import { loadAndPlay } from "$lib/helpers";
+
     let {
-        title,
-        artist,
-        time,
-        album,
+        track,
         index,
-        onclick
+        playList
     } : {
-        title: string;
-        artist: string;
-        time: string;
-        album: string;
+        track: FullTrack;
         index: number;
-        onclick?: (e: MouseEvent) => void;
+        playList: (e: MouseEvent) => void;
     } = $props();
 
-    import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
-
+    
+    
 </script>
 
 <ContextMenu.Root>
     <ContextMenu.Trigger>
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={onclick} class="tile" class:even = {index % 2 === 0}>
-            <span class="infoLabel" style:flex={4}>{title}</span>
-            <span class="infoLabel" style:flex={1}>{time}</span>
-            <span class="infoLabel" style:flex={3}>{artist}</span>
-            <span class="infoLabel" style:flex={3}>{album}</span>
+        <div onclick={async () => await loadAndPlay(track)} class="tile" class:even = {index % 2 === 0}>
+            <span class="infoLabel" style:flex={4}>{track.track.title}</span>
+            <span class="infoLabel" style:flex={1}>{formatDuration(track.track.duration)}</span>
+            <span class="infoLabel" style:flex={3}>{track.artist_name}</span>
+            <span class="infoLabel" style:flex={3}>{track.album_title}</span>
         </div>
     </ContextMenu.Trigger>
 
     <ContextMenu.Content onInteractOutside={(e) => e.stopPropagation()}>
-        <ContextMenu.Item>Play</ContextMenu.Item>
-        <ContextMenu.Item>Play from here</ContextMenu.Item>
-        <ContextMenu.Item>Play Next</ContextMenu.Item>
-        <ContextMenu.Item>Add to Queue</ContextMenu.Item>
+        <ContextMenu.Item onclick={async () => {
+            await loadAndPlay(track);
+        }}>
+            Play
+        </ContextMenu.Item>
+        
+        <ContextMenu.Item
+            onclick={(e) => playList(e)}
+        >
+            Play from here
+        </ContextMenu.Item>
+
+        <ContextMenu.Item onclick={async () => commands.playNext(track)}>Play Next</ContextMenu.Item>
+        <ContextMenu.Item onclick={async () => commands.addToQueue(track)}>Add to Queue</ContextMenu.Item>
     </ContextMenu.Content>
 
 </ContextMenu.Root>

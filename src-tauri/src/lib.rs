@@ -6,6 +6,7 @@ mod library_service;
 mod media_lib_cmd;
 mod metadata;
 mod models;
+mod lyrics;
 
 use app_state::ManagedState;
 use std::fs::File;
@@ -29,8 +30,13 @@ pub fn run() {
         app_state::get_state,
         app_state::increment_click,
         app_state::reset_clicks,
+
         metadata::index,
+
         media_lib_cmd::get_all_tracks,
+        media_lib_cmd::get_all_albums,
+        media_lib_cmd::get_artist_by_id,
+
         audio_player::get_player,
         audio_player::play,
         audio_player::load,
@@ -41,7 +47,9 @@ pub fn run() {
         audio_player::add_to_queue,
         audio_player::clear,
         audio_player::pause,
-        audio_player::seek
+        audio_player::seek,
+
+        lyrics::get_line_lyrics
     ]);
 
     #[cfg(debug_assertions)]

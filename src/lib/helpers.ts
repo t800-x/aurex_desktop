@@ -1,3 +1,6 @@
+import { commands } from "./bindings";
+import type { FullTrack } from "./bindings";
+
 export function areArraysEqual<T>(arr1: T[], arr2: T[]): boolean {
   if (arr1 === arr2) return true;
 
@@ -15,4 +18,10 @@ export function formatDuration(seconds: bigint | number): string {
   const m = Math.floor(s / 60);
   const rem = Math.floor(s % 60);
   return `${m}:${rem.toString().padStart(2, '0')}`;
+}
+
+export async function loadAndPlay(tr: FullTrack) {
+    commands.clear();
+    await commands.load(tr);
+    commands.play();
 }

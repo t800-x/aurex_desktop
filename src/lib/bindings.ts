@@ -35,6 +35,12 @@ async index() : Promise<void> {
 async getAllTracks() : Promise<FullTrack[]> {
     return await TAURI_INVOKE("get_all_tracks");
 },
+async getAllAlbums() : Promise<Album[]> {
+    return await TAURI_INVOKE("get_all_albums");
+},
+async getArtistById(id: number) : Promise<Artist> {
+    return await TAURI_INVOKE("get_artist_by_id", { id });
+},
 async getPlayer() : Promise<Result<AudioPlayer, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_player") };
@@ -117,6 +123,9 @@ async pause() : Promise<Result<AudioPlayer, string>> {
 },
 async seek(time: number) : Promise<void> {
     await TAURI_INVOKE("seek", { time });
+},
+async getLineLyrics(track: FullTrack) : Promise<LineLyrics[]> {
+    return await TAURI_INVOKE("get_line_lyrics", { track });
 }
 }
 
@@ -130,9 +139,12 @@ async seek(time: number) : Promise<void> {
 
 /** user-defined types **/
 
+export type Album = { id: bigint | null; artist_id: bigint; title: string; year: bigint; genre: string | null; album_art: string | null }
 export type AppState = { clicks: number }
+export type Artist = { id: bigint | null; name: string; genre: string | null }
 export type AudioPlayer = { currently_playing: FullTrack | null; state: PlayerState; queue: FullTrack[]; position: number }
 export type FullTrack = { track: Track; artist_name: string; album_title: string; album_art: string | null; playlist_position: bigint | null }
+export type LineLyrics = { start_time: number; end_time: number | null; line: string; writers: string }
 export type PlayerState = "Paused" | "Playing" | "Empty" | "Stopped"
 export type Track = { id: bigint | null; album_id: bigint; artist_id: bigint; file_path: string; title: string; track_number: bigint; disc_number: bigint; bpm: bigint; duration: bigint; initial_key: string | null; isrc: string | null; lyrics: string | null; composer: string | null }
 

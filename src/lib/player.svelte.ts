@@ -18,6 +18,7 @@ class PlayerManager {
     state = $state<PlayerState>(PlayerState.Empty);
     queue = $state<FullTrack[]>([]);
     position = $state<number>(0.0);
+    lyricsLineIndex = $state<number | null>(null);
 
     private async init() {
         const result = await commands.getPlayer();

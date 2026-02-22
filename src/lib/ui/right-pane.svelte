@@ -5,7 +5,7 @@
     import Lyrics from './lyrics.svelte';
 
   function checkWidth() {
-    router.rightPaneOverlaying = window.innerWidth < 1200;
+    router.rightPaneOverlaying = window.innerWidth < 1500;
   }
   let rightPaneOpen = $derived(router.rightPaneContent !== null);
   onMount(() => {
@@ -78,7 +78,6 @@
   .rightPaneInner {
     width: 320px;
     height: 100%;
-    padding: 1rem;
-    overflow-y: auto;
+    overflow: hidden;
   }
 </style>
