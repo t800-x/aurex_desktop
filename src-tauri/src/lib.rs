@@ -36,6 +36,7 @@ pub fn run() {
         media_lib_cmd::get_all_tracks,
         media_lib_cmd::get_all_albums,
         media_lib_cmd::get_artist_by_id,
+        media_lib_cmd::get_album_tracks,
 
         audio_player::get_player,
         audio_player::play,
@@ -48,6 +49,11 @@ pub fn run() {
         audio_player::clear,
         audio_player::pause,
         audio_player::seek,
+        audio_player::play_tracks,
+        audio_player::add_list_to_queue,
+        audio_player::play_list_next,
+
+        library_service::fulltrack_from_id,
 
         lyrics::get_line_lyrics
     ]);

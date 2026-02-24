@@ -10,6 +10,7 @@
   import NowPlaying from "$lib/ui/now-playing.svelte";
   import RightPane from "$lib/ui/right-pane.svelte";
   import { router } from "$lib/router.svelte";
+  
 
   let blocked = $derived(router.rightPaneContent !== null && router.rightPaneOverlaying);
 </script>
@@ -18,7 +19,7 @@
   <Navbar />
   <div class="contentWrapper">
     <main class="mainContent" class:blocked={blocked}>
-      <SongsPage />
+      <SongsPage /> 
       <AlbumsPage />
       <ArtistsPage />
       <SearchPage />

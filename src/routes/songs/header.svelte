@@ -1,10 +1,26 @@
 <script lang="ts">
-  let { class: className = '' } = $props();
+    import Input from "$lib/components/ui/input/input.svelte";
+
+  let {
+    onchanged
+  } : {
+    onchanged: (searchterm: string) => void;
+  } = $props();
+
+  let searchTerms = $state("");
+  $effect(() => {
+    onchanged(searchTerms);
+  });
 </script>
 
-<div class="header {className}">
+<div class="header">
     <div class="title">
-        Songs
+        <span style="grid-column: 2; justify-self: center;">Songs</span>
+
+        <div style="display: inline-block; grid-column: 3; justify-self: end; margin-right: 4px;">
+            <Input type="text" bind:value={searchTerms} placeholder={'Filter'} />
+        </div>
+        
     </div>
 
     <div class="listInfo">
@@ -36,11 +52,11 @@
         height: 50%;
         width: 100%;
         border-bottom: 1px solid var(--color-divider);
-        display: flex;
-        justify-content: center;
-        align-items: center;
         font-weight: 700;
         font-size: 20px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
     }
 
     .listInfo {

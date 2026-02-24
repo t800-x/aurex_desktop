@@ -1,4 +1,24 @@
-use crate::{library_service::library_service, models::{Album, Artist, FullTrack}};
+use crate::{library_service::library_service, models::{Album, Artist, FullTrack, Track}};
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_album_tracks(album_id: i32) -> Vec<Track> {
+    let library = library_service().lock();
+
+    match library {
+        Ok(service) => {
+            if let Ok(tracks) = service.get_tracks_by_album(album_id.into()) {
+                return tracks;
+            }
+        },
+        Err(e) => {
+            eprintln!("Failed to lock db mutex: {}", e);
+            return Vec::new();
+        }
+    }
+
+    return Vec::new();
+}
 
 #[tauri::command]
 #[specta::specta]

@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::models::FullTrack;
+use crate::{library_service::library_service, models::{FullTrack, Track}};
 use libaurex::{aurex::Player, enums::EngineSignal};
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -27,7 +27,12 @@ fn player_callback(event: EngineSignal, app_handle: AppHandle) {
 
             let audio_engine = audio_player().lock().await;
 
-            if let Some(track) = player.queue.pop_front() {
+            let mut first_track: Option<FullTrack> = None;
+            state.update(|player| {
+                first_track = player.queue.pop_front();
+            }).await;
+
+            if let Some(track) = first_track {
                 _ = audio_engine.clone().load(&track.track.file_path).await;
                 _ = audio_engine.play().await;
 
@@ -72,7 +77,7 @@ pub fn track_progress(app_handle: AppHandle) {
 
             _ = app_handle.emit("progress-changed", progress);
 
-            _ = tokio::time::sleep(Duration::from_millis(250)).await;
+            _ = tokio::time::sleep(Duration::from_millis(20)).await;
         }
     });
 }
@@ -102,6 +107,29 @@ impl Default for AudioPlayer {
             position: 0.0,
         }
     }
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn play_tracks(state: tauri::State<'_, ManagedPlayer>, tracks: Vec<Track>, index: i32) -> Result<AudioPlayer, String> {
+    let mut full_tracks: Vec<FullTrack> = Vec::new();
+    
+    if let Ok(service) = library_service().lock() {
+        //Convert tracks to fulltrack
+        for track in tracks {
+            if let Ok(ft_option) = service.get_full_track_by_id(track.id.unwrap()) {
+                if let Some(full_track) = ft_option {
+                    full_tracks.push(full_track);
+                }
+            }
+        }
+    }
+
+    if !full_tracks.is_empty() {
+        _ = play_list(state.clone(), full_tracks, index).await;
+    }
+
+    Ok(state.get().await)
 }
 
 #[tauri::command]
@@ -200,6 +228,8 @@ pub async fn play_list(
     _ = play(state.clone()).await;
     
     state.update(|player| {
+        player.queue.clear();
+
         while index < list.len()  {
             player.queue.push_back(list[index].clone());
             index += 1;
@@ -235,6 +265,68 @@ pub async fn add_to_queue(
             player.queue.push_back(track);
         })
         .await;
+
+    Ok(state.get().await)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn add_list_to_queue(state: tauri::State<'_, ManagedPlayer>, fulltracks: Option<Vec<FullTrack>>, tracks: Option<Vec<Track>>) -> Result<AudioPlayer, String> {
+
+    if let Some(fulltracks) = fulltracks {
+        for track in fulltracks {
+            _ = add_to_queue(state.clone(), track).await;
+        }
+    }
+
+    if let Some(tracks) = tracks {
+        for track in tracks {
+            let mut temp_track: Option<FullTrack> = None;
+
+            if let Ok(library) = library_service().lock() {
+                if let Ok(res) = library.get_full_track_by_id(track.id.unwrap()) {
+                    if let Some(fulltrack) = res {
+                        temp_track = Some(fulltrack);
+                    }
+                }
+            } 
+
+           if let Some(track) = temp_track {
+                _ = add_to_queue(state.clone(), track).await;
+           }
+        }
+    } 
+
+    Ok(state.get().await)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn play_list_next(state: tauri::State<'_, ManagedPlayer>, fulltracks: Option<Vec<FullTrack>>, tracks: Option<Vec<Track>>) -> Result<AudioPlayer, String> {
+
+    if let Some(fulltracks) = fulltracks {
+        for track in fulltracks {
+            _ = play_next(state.clone(), track).await;
+        }
+    }
+
+    if let Some(tracks) = tracks {
+        for track in tracks {
+            let mut temp_track: Option<FullTrack> = None;
+
+            if let Ok(library) = library_service().lock() {
+                if let Ok(res) = library.get_full_track_by_id(track.id.unwrap()) {
+                    if let Some(fulltrack) = res {
+                        temp_track = Some(fulltrack);
+                    }
+                }
+            } 
+
+           if let Some(track) = temp_track {
+                _ = play_next(state.clone(), track).await;
+           }
+        }
+    } 
 
     Ok(state.get().await)
 }

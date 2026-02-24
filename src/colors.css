@@ -1,10 +1,11 @@
 :root {
-  --color-hover: rgba(255, 255, 255, 0.1);
+  --color-hover: rgba(255, 255, 255, 0.05);
   --color-hover-w2: rgba(255, 255, 255, 0.15);
-  --color-double-hover: rgba(255, 255, 255, 0.2);
+  --color-double-hover: rgba(255, 255, 255, 0.08);
   --color-header: rgba(40, 40, 40, 0.6);
 
-  --color-accent: rgb(250, 88, 106);
+  --color-accent: #fa2e49;
+  --color-accent-dark: #fa2d48;
   --color-page-background: rgb(31, 31, 31);
   --color-divider: rgb(59, 59, 60);
   --color-navbar-label: rgb(176, 176, 177);

@@ -81,8 +81,6 @@
 </script>
 
 <div class="lyricsContainer">
-    Lyrics
-
     <div bind:this={listEl} class="lyricsDisplay">
         <div bind:this={innerEl} class="lyricsInner">
             {#each line_lyrics as lyrics, index (lyrics.start_time)}

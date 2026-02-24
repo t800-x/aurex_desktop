@@ -19,6 +19,21 @@ pub fn library_service() -> &'static Mutex<LibraryService> {
 }
 
 // ---------------------------------------------------------------------------
+// Commands
+// ---------------------------------------------------------------------------
+#[tauri::command]
+#[specta::specta]
+pub async fn fulltrack_from_id(id: i32) -> Option<FullTrack> {
+    if let Ok(library) = library_service().lock() {
+        if let Ok(result) = library.get_full_track_by_id(id.into()) {
+           return result; 
+        }
+    }
+
+    None
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

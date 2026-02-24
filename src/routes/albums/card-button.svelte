@@ -4,15 +4,22 @@
 
     let {
         class: className = '',
-        Icon
+        Icon,
+        onclick
     } : {
         class?: string;
         Icon: any;
+        onclick: (e: MouseEvent) => void;
     } = $props();
 
+
+    function handleClick(e: MouseEvent) {
+        e.stopPropagation(); 
+        onclick(e);
+    }
 </script>
 
-<button class="btn {className}" >
+<button class="btn {className}" onclick={handleClick}>
     <Icon />
 </button>
 

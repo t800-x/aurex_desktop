@@ -13,13 +13,30 @@
     let hidden = $derived(router.current !== section);
     let displayMode = $derived(hidden ? 'none' : 'flex');
     let tracks: FullTrack[] = $state([]);
+    let proxy: FullTrack[] = $state([]);
 
     onMount(async () => {
         tracks = await commands.getAllTracks();
+        proxy = [...tracks];
     });
 
     async function playList(index: number): Promise<void> {
-        commands.playList(tracks, index);
+        commands.playList(proxy, index);
+    }
+
+    async function onFilterTermChanged(term: string) {
+        let lowerTerm = term.toLowerCase();
+        if (term.length === 0) {
+            proxy = [...tracks];
+        } else {
+            proxy = tracks.filter(t => {
+                return (
+                    t.album_title?.toLowerCase().includes(lowerTerm) ||
+                    t.artist_name?.toLowerCase().includes(lowerTerm) ||
+                    t.track?.title?.toLowerCase().includes(lowerTerm)
+                );
+            });
+        }
     }
 </script>
 
@@ -27,10 +44,10 @@
 
     <div class="tracklist">
 
-        <Header />
+        <Header onchanged={onFilterTermChanged} />
 
-        <VList data={tracks} style='height: 100%' getKey={(_, i) => i}>
-            {#snippet children(track, i)}
+        <VList data={proxy} style='height: 100%' getKey={(_: any, i: any) => i}>
+            {#snippet children(track: any, i: number)}
                 {#if i === 0}
                     <div class="h-[100px]">
                     </div>

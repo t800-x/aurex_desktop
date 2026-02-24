@@ -41,6 +41,9 @@ async getAllAlbums() : Promise<Album[]> {
 async getArtistById(id: number) : Promise<Artist> {
     return await TAURI_INVOKE("get_artist_by_id", { id });
 },
+async getAlbumTracks(albumId: number) : Promise<Track[]> {
+    return await TAURI_INVOKE("get_album_tracks", { albumId });
+},
 async getPlayer() : Promise<Result<AudioPlayer, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_player") };
@@ -123,6 +126,33 @@ async pause() : Promise<Result<AudioPlayer, string>> {
 },
 async seek(time: number) : Promise<void> {
     await TAURI_INVOKE("seek", { time });
+},
+async playTracks(tracks: Track[], index: number) : Promise<Result<AudioPlayer, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("play_tracks", { tracks, index }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async addListToQueue(fulltracks: FullTrack[] | null, tracks: Track[] | null) : Promise<Result<AudioPlayer, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("add_list_to_queue", { fulltracks, tracks }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async playListNext(fulltracks: FullTrack[] | null, tracks: Track[] | null) : Promise<Result<AudioPlayer, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("play_list_next", { fulltracks, tracks }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async fulltrackFromId(id: number) : Promise<FullTrack | null> {
+    return await TAURI_INVOKE("fulltrack_from_id", { id });
 },
 async getLineLyrics(track: FullTrack) : Promise<LineLyrics[]> {
     return await TAURI_INVOKE("get_line_lyrics", { track });

@@ -1,11 +1,12 @@
 <script lang="ts">
     import { commands, type Album } from "$lib/bindings";
-    import type { Artist } from "$lib/bindings";
+    import type { Artist, Track } from "$lib/bindings";
     import { convertFileSrc } from "@tauri-apps/api/core";
     import DoubleNoteIcon from "$lib/icons/double-note-icon.svelte";
     import { onMount } from "svelte";
     import CardButton from "./card-button.svelte";
     import PlayIcon from "$lib/icons/play-icon.svelte";
+    import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
 
     let {
         album
@@ -17,37 +18,51 @@
         let imgSrc = convertFileSrc(album.album_art ?? "");
 
     let artist: Artist | null = $state(null);
+    let tracks: Track[] | null = $state(null);
 
     onMount(async () => {
         artist = await commands.getArtistById(Number(album.artist_id));
+        tracks = await commands.getAlbumTracks(Number(album.id));
     });
 
 </script>
 
-<div class="card">
+<ContextMenu.Root>
+    <ContextMenu.Trigger>
+        <div class="card">
 
-    <div class="coverContainer">
+            <div class="coverContainer">
 
-        {#if album.album_art !== null}
-            <img class="albumCover" src={imgSrc} alt="">
-        {:else}
-            <div class="albumCover">
-                <DoubleNoteIcon />
+                {#if album.album_art !== null}
+                    <img class="albumCover" src={imgSrc} alt="">
+                {:else}
+                    <div class="albumCover">
+                        <DoubleNoteIcon />
+                    </div>
+                {/if}
+
+                <CardButton class="cardButton" Icon={PlayIcon} onclick={async () => {
+                    commands.playTracks(tracks!, 0)
+                }}/>
             </div>
-        {/if}
 
-        <CardButton class="cardButton" Icon={PlayIcon}/>
-    </div>
+            <div class="label title">
+                {album.title}
+            </div>
 
-    <div class="label title">
-        {album.title}
-    </div>
+            <div class="label artist">
+                {artist?.name}
+            </div>
+        
+        </div>
+    </ContextMenu.Trigger>
 
-    <div class="label artist">
-        {artist?.name}
-    </div>
- 
-</div>
+    <ContextMenu.Content>
+        <ContextMenu.Item onclick={async () => commands.playTracks(tracks!, 0)}>Play</ContextMenu.Item>
+        <ContextMenu.Item onclick={async () => commands.playListNext(null, tracks)}>Play Next</ContextMenu.Item>
+        <ContextMenu.Item onclick={async () => commands.addListToQueue(null, tracks)}>Add to Queue</ContextMenu.Item>
+    </ContextMenu.Content>
+</ContextMenu.Root>
 
 <style>
 
