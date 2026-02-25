@@ -1,3 +1,0 @@
-thread '<unnamed>' (1084) panicked at C:\Users\Suresh Chaudhary\.cargo\git\checkouts\libaurex-rs-9f747bfedaf9cc3d\ed25a8d\src\decoding_loop.rs:39:14:
-Failed to send packet to decoder.: ffmpeg::Error(1094995529: )
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
