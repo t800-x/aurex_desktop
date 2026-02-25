@@ -4,7 +4,8 @@
     import LineLyric from "./line-lyric.svelte";
 
     let line_lyrics: LineLyrics[] = $state([]);
-    let itemEls: Array<HTMLElement | null> = [];
+    // svelte-ignore non_reactive_update
+        let itemEls: Array<HTMLElement | null> = [];
     let listEl: HTMLDivElement | null = null;
     let innerEl: HTMLDivElement | null = null;
     let localTrack = $state<FullTrack | null>(null);

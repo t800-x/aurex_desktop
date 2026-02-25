@@ -5,11 +5,17 @@
     import NavbarItem from "./navbar-item.svelte";
     import NavbarLabel from "./navbar-label.svelte";
     import { RightPaneContent, router, Section } from "$lib/router.svelte";
-    import Button from "$lib/components/ui/button/button.svelte";
-    import { commands } from "$lib/bindings";
+    import { commands, type Playlist } from "$lib/bindings";
+    import { onMount } from "svelte";
+    import PlaylistIcon from "$lib/icons/playlist-icon.svelte";
 
 
     const width = 268;
+
+    let playlists: Playlist[] = $state([]);
+    let playlistsEmpty = $derived(playlists.length === 0);
+
+    onMount(async () => playlists = await commands.getAllPlaylists());
 
     // Menu items.
     const items = [
@@ -37,7 +43,15 @@
         <NavbarItem Icon={item.icon} section={item.section} text={item.title}/>
     {/each}
 
-    <Button onclick={async () => commands.index()}>Index</Button>
+    <div style="height: 20px"></div>
+
+    {#if !playlistsEmpty}
+        <NavbarLabel text={"Playlists"} />
+
+        {#each playlists as playlist}
+            <NavbarItem Icon={PlaylistIcon} section={`pl-${playlist.id}` as unknown as Section} text={playlist.name} />
+        {/each}
+    {/if}
 </div>
  
 

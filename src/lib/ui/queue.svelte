@@ -10,6 +10,8 @@
     let draggedFrom = $state<number | null>(null);
     let draggedTo = $state<number | null>(null);
 
+    let empty = $derived(audioPlayer.queue.length === 0);
+
     let draggedToRef = { current: null as number | null };
 
     $effect(() => {
@@ -57,18 +59,34 @@
 }}>
     Queue
 
-    <div class="h-[10px]"></div>
+    <div class="listWrapper">
 
-    <VList data={audioPlayer.queue} style='height: 100%' getKey={(track: FullTrack) => track.track.id}>
-        {#snippet children(track: FullTrack, index: number)}
-            <QueueTile
-                track={track}
-                index={index}
-                bind:draggedFrom
-                bind:draggedTo
-            />
-        {/snippet}
-    </VList>
+        <div class="h-[10px]"></div>
+
+        {#if empty}
+            <div
+                style="
+                    flex: 1;
+                    color: var(--color-navbar-label);
+                    font-weight: 500;
+                    font-size: 13px;
+                    text-align: center;
+                "
+            >There's no music in the queue.</div>
+
+        {:else}
+            <VList data={audioPlayer.queue} style='height: 100%' getKey={(track: FullTrack) => track.track.id}>
+                {#snippet children(track: FullTrack, index: number)}
+                    <QueueTile
+                        track={track}
+                        index={index}
+                        bind:draggedFrom
+                        bind:draggedTo
+                    />
+                {/snippet}
+            </VList>
+        {/if}
+    </div>
 </div>
 
 <style>
@@ -78,5 +96,13 @@
         overflow: hidden;
         height: 100%;
         width: 100%;
+    }
+
+    .listWrapper {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 </style>

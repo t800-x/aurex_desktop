@@ -146,7 +146,7 @@ impl FullTrack {
 // Playlist
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Serialize, Deserialize, Debug, Type)]
 pub struct Playlist {
     pub id: Option<i64>,
     pub name: String,

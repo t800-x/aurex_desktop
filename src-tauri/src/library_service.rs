@@ -346,6 +346,18 @@ impl LibraryService {
         Ok(result)
     }
 
+    pub fn get_track_id_by_path(&self, file_path: &str) -> Option<i64> {
+        let conn = self.lock();
+        conn.query_row(
+            "SELECT id FROM tracks WHERE file_path = ?1",
+            params![file_path],
+            |row| row.get(0),
+        )
+        .optional()
+        .ok()
+        .flatten()
+    }
+
     pub fn get_full_track_by_id(&self, id: i64) -> Result<Option<FullTrack>> {
         let conn = self.lock();
         let sql = format!("{FULL_TRACK_SELECT} WHERE t.id = ?1");
@@ -411,6 +423,28 @@ impl LibraryService {
         Ok(conn.last_insert_rowid())
     }
 
+    pub fn get_playlist_id_by_name(&self, name: &str) -> Result<Option<i64>> {
+        let conn = self.lock();
+        let result = conn
+            .query_row(
+                "SELECT id FROM playlists WHERE name = ?1",
+                params![name],
+                |row| row.get(0),
+            )
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn playlist_exists(&self, name: &str) -> Result<bool> {
+        let conn = self.lock();
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM playlists WHERE name = ?1",
+            params![name],
+            |row| row.get(0),
+        )?;
+        Ok(count > 0)
+    }
+
     pub fn delete_playlist(&self, playlist_id: i64) -> Result<()> {
         let conn = self.lock();
         conn.execute("DELETE FROM playlists WHERE id = ?1", params![playlist_id])?;
@@ -433,9 +467,33 @@ impl LibraryService {
         Ok(())
     }
 
+    pub fn get_playlist_by_id(&self, id: i64) -> Option<Playlist> {
+        let conn = self.lock();
+        conn.query_row(
+            "SELECT * FROM playlists WHERE id = ?1",
+            params![id],
+            Playlist::from_row,
+        )
+        .optional()
+        .ok()
+        .flatten()
+    }
+
     // -----------------------------------------------------------------------
     // Playlist track manipulation
     // -----------------------------------------------------------------------
+
+    pub fn is_track_in_playlist(&self, playlist_id: i64, file_path: &str) -> Result<bool> {
+        let conn = self.lock();
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM playlist_tracks pt
+            JOIN tracks t ON pt.track_id = t.id
+            WHERE pt.playlist_id = ?1 AND t.file_path = ?2",
+            params![playlist_id, file_path],
+            |row| row.get(0),
+        )?;
+        Ok(count > 0)
+    }
 
     pub fn add_track_to_playlist(&self, playlist_id: i64, track_id: i64) -> Result<()> {
         let conn = self.lock();

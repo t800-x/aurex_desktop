@@ -9,6 +9,7 @@
   import SearchPage from "./search/search-page.svelte";
   import NowPlaying from "$lib/ui/now-playing.svelte";
   import RightPane from "$lib/ui/right-pane.svelte";
+  import PlaylistPage from "./playlist/playlist_page.svelte";
   import { router } from "$lib/router.svelte";
   
 
@@ -24,6 +25,7 @@
       <ArtistsPage />
       <SearchPage />
       <NowPlaying />
+      <PlaylistPage />
     </main>
 
     <RightPane/>

@@ -1,4 +1,67 @@
-use crate::{library_service::library_service, models::{Album, Artist, FullTrack, Track}};
+use crate::{library_service::library_service, models::{Album, Artist, FullTrack, Playlist, Track}};
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_playlist(id: i32) -> Option<Playlist> {
+    if let Ok(library) = library_service().lock() {
+        if let Some(playlist) = library.get_playlist_by_id(id.into()) {
+            return Some(playlist);
+        }
+    }
+
+    None
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_all_playlists() -> Vec<Playlist> {
+
+    if let Ok(library) = library_service().lock() {
+        if let Ok(playlists) = library.get_all_playlists() {
+            return playlists;
+        }
+    }
+
+    Vec::new()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_playlist_tracks(playlist_id: i32) -> Vec<FullTrack> {
+    if let Ok(library) = library_service().lock() {
+        if let Ok(playlist_tracks) = library.get_tracks_in_playlist(playlist_id.into()) {
+            return playlist_tracks;
+        }
+    }
+
+    Vec::new()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_artist_albums(id: i32) -> Vec<Album> {
+
+    if let Ok(library) = library_service().lock() {
+        if let Ok(albums) = library.get_albums_by_artist(id.into()) {
+            return albums;
+        }
+    }
+
+    Vec::new()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_all_artists() -> Vec<Artist> {
+    
+    if let Ok(library) = library_service().lock() {
+        if let Ok(artists) = library.get_all_artists() {
+            return artists;
+        }
+    }
+
+    Vec::new()
+}
 
 #[tauri::command]
 #[specta::specta]

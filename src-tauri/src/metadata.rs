@@ -9,11 +9,16 @@ use crate::library_service::library_service;
 use std::collections::{HashSet, VecDeque};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[tauri::command]
 #[specta::specta]
 pub async fn index() {
+    index_tracks();
+    index_playlists();
+}
+
+pub fn index_tracks() {
     println!("Begin Indexing");
 
     let files = get_all_audio_files();
@@ -160,6 +165,82 @@ pub async fn index() {
     }
 
     println!("Done indexing");
+}
+
+pub fn index_playlists() {
+    let files = get_m3u8_files();
+
+    for file in files {
+        let mut playlist_id: Option<i64> = None;
+
+        if let Some(filename) = file.file_stem().and_then(|s| s.to_str()) {
+            if let Ok(library) = library_service().lock() {
+                if !library.playlist_exists(filename).unwrap() {
+                    _ = library.create_playlist(filename, None);
+                }
+
+                if let Ok(result) = library.get_playlist_id_by_name(filename) {
+                    playlist_id = result;
+                }
+            }
+        }
+
+        let audio_files = get_playlist_track_paths(file);
+
+        for audio_file in audio_files {
+            if let Ok(library) = library_service().lock() {
+                if let Some(p_id) = playlist_id {
+                    if !library.is_track_in_playlist(p_id, audio_file.to_str().unwrap_or("")).unwrap_or(false) {
+                        if let Some(track_id) = library.get_track_id_by_path(audio_file.to_str().unwrap()) {
+                            _ = library.add_track_to_playlist(p_id, track_id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn get_playlist_track_paths(m3u8_file: PathBuf) -> VecDeque<PathBuf> {
+    let mut files: VecDeque<PathBuf> = VecDeque::new();
+    let base_dir = m3u8_file.parent().unwrap_or(Path::new(""));
+
+    if let Ok(file) = File::open(&m3u8_file) {
+        let reader = BufReader::new(file);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                if !line.is_empty() && !line.starts_with('#') {
+                    let resolved = base_dir.join(&line);
+                    if let Ok(canonical) = resolved.canonicalize() {
+                        let path_str = canonical.to_string_lossy();
+                        let clean = path_str.strip_prefix(r"\\?\").unwrap_or(&path_str);
+                        files.push_back(PathBuf::from(clean));
+                    }
+                }
+            }
+        }
+    }
+    files
+}
+
+fn get_m3u8_files() -> VecDeque<PathBuf> {
+    let mut files = VecDeque::<PathBuf>::new();
+    let f_ext = "m3u8";
+    let dirs_to_process = get_directories();
+
+    for dir in dirs_to_process {
+        for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
+            if entry.file_type().is_file() {
+                if let Some(ext) = entry.path().extension().and_then(|s| s.to_str()) {
+                    if f_ext == ext {
+                        files.push_back(entry.into_path());
+                    }
+                }
+            }
+        }
+    }
+
+    return files;
 }
 
 fn get_all_audio_files() -> VecDeque<PathBuf> {

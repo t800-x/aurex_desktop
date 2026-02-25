@@ -46,7 +46,7 @@
 <div class="page albumsPage">
     
     <div class="albumList">
-        <Header onchanged={onFilterTermChanged}/>
+        <Header title={"Albums"} onchanged={onFilterTermChanged}/>
 
 
         <div bind:clientWidth={containerWidth} style="height: 100%;" >

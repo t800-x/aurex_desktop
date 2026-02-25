@@ -24,7 +24,8 @@
   let { initialComponent, initialProps = {}, contextKey = 'stack' }: Props = $props();
 
   let stack = $state<StackEntry[]>([
-    { component: initialComponent, props: initialProps, id: crypto.randomUUID() }
+    // svelte-ignore state_referenced_locally
+        { component: initialComponent, props: initialProps, id: crypto.randomUUID() }
   ]);
 
   function push(component: Component<any>, props: Record<string, any> = {}) {
@@ -43,7 +44,8 @@
     return stack.length > 1;
   }
 
-  setContext<StackContext>(contextKey, { push, pop, replace, canPop });
+  // svelte-ignore state_referenced_locally
+    setContext<StackContext>(contextKey, { push, pop, replace, canPop });
 </script>
 
 {#each stack as page, i (page.id)}

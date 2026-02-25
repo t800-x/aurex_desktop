@@ -2,10 +2,12 @@
     import { Input } from "$lib/components/ui/input";
 
     let {
-    onchanged
-  } : {
-    onchanged: (searchterm: string) => void;
-  } = $props();
+        onchanged,
+        title,
+    } : {
+        onchanged: (searchterm: string) => void;
+        title: string
+    } = $props();
 
   let searchTerms = $state("");
   $effect(() => {
@@ -16,7 +18,7 @@
 
 <div class="header">
     <div class="title">
-        <span style="grid-column: 2; justify-self: center;">Albums</span>
+        <span style="grid-column: 2; justify-self: center;">{title}</span>
 
         <div style="display: inline-block; grid-column: 3; justify-self: end; margin-right: 4px;">
             <Input type="text" bind:value={searchTerms} placeholder={'Filter'} />
@@ -27,6 +29,7 @@
 
 <style>
     .header {
+        align-self: flex-start;
         height: 50px;
         flex-shrink: 0;
         width: calc(100% - 8px);

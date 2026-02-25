@@ -21,6 +21,8 @@ use crate::{
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     ensure_paths_created();
+    metadata::index_tracks();
+    metadata::index_playlists();
 
     if !constants::dir_file().exists() {
         _ = File::create(constants::dir_file()).expect("Failed to create directories file");
@@ -37,6 +39,11 @@ pub fn run() {
         media_lib_cmd::get_all_albums,
         media_lib_cmd::get_artist_by_id,
         media_lib_cmd::get_album_tracks,
+        media_lib_cmd::get_all_artists,
+        media_lib_cmd::get_artist_albums,
+        media_lib_cmd::get_playlist_tracks,
+        media_lib_cmd::get_all_playlists,
+        media_lib_cmd::get_playlist,
 
         audio_player::get_player,
         audio_player::play,
