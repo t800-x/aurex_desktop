@@ -59,6 +59,9 @@ async getAllPlaylists() : Promise<Playlist[]> {
 async getPlaylist(id: number) : Promise<Playlist | null> {
     return await TAURI_INVOKE("get_playlist", { id });
 },
+async search(term: string) : Promise<SearchResults> {
+    return await TAURI_INVOKE("search", { term });
+},
 async getPlayer() : Promise<Result<AudioPlayer, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_player") };
@@ -192,6 +195,7 @@ export type FullTrack = { track: Track; artist_name: string; album_title: string
 export type LineLyrics = { start_time: number; end_time: number | null; line: string; writers: string }
 export type PlayerState = "Paused" | "Playing" | "Empty" | "Stopped"
 export type Playlist = { id: bigint | null; name: string; cover_path: string | null; created_at: bigint }
+export type SearchResults = { tracks: FullTrack[]; albums: Album[] }
 export type Track = { id: bigint | null; album_id: bigint; artist_id: bigint; file_path: string; title: string; track_number: bigint; disc_number: bigint; bpm: bigint; duration: bigint; initial_key: string | null; isrc: string | null; lyrics: string | null; composer: string | null }
 
 /** tauri-specta globals **/

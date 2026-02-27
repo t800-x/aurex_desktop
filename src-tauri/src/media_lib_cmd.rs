@@ -1,4 +1,64 @@
-use crate::{library_service::library_service, models::{Album, Artist, FullTrack, Playlist, Track}};
+use crate::{library_service::library_service, models::{Album, Artist, FullTrack, Playlist, SearchResults, Track}};
+
+#[tauri::command]
+#[specta::specta]
+pub async fn search(mut term: String) -> SearchResults {
+    term = term.to_lowercase();
+    let mut tracks: Vec<FullTrack> = Vec::new();
+    let mut albums: Vec<Album> = Vec::new();
+
+    let mut filtered_tracks: Vec<FullTrack> = Vec::new();
+    let mut filtered_albums: Vec<Album> = Vec::new();
+
+    if let Ok(library) = library_service().lock() {
+        if let Ok(all_tracks) = library.get_all_tracks() {
+            tracks = all_tracks;
+        }
+
+        if let Ok(all_albums) = library.get_all_albums() {
+            albums = all_albums;
+        }
+
+    }
+
+    filter_tracks(&term, &tracks, &mut filtered_tracks);
+    filter_albums(&term, &albums, &mut filtered_albums);
+
+    SearchResults {
+        tracks: filtered_tracks,
+        albums: filtered_albums
+    }
+}
+
+fn filter_tracks(searchterm: &str, tracks: &Vec<FullTrack>, filtered: &mut Vec<FullTrack>) {
+    for track in tracks {
+        if (track.album_title.to_lowercase().contains(searchterm)) ||
+            (track.artist_name.to_lowercase().contains(searchterm)) ||
+            (track.track.title.to_lowercase().contains(searchterm)) ||
+            (track.track.lyrics.clone().unwrap_or(String::from("")).to_lowercase().contains(searchterm)) {
+                filtered.push(track.clone());
+            }
+    }
+}
+
+fn filter_albums(searchterm: &str, albums: &Vec<Album>, filtered: &mut Vec<Album>) {
+    for album in albums {
+
+        let mut artist = String::from("");
+        if let Ok(library) = library_service().lock() {
+            if let Ok(artist_obj) = library.get_artist_by_id(album.artist_id) {
+                if let Some(artist_inner) = artist_obj {
+                    artist = artist_inner.name;
+                }
+            }
+        }
+
+        if (artist.to_lowercase().contains(searchterm)) ||
+            (album.title.to_lowercase().contains(searchterm)) {
+                filtered.push(album.clone());
+            }
+    }
+}
 
 #[tauri::command]
 #[specta::specta]
@@ -56,7 +116,15 @@ pub async fn get_all_artists() -> Vec<Artist> {
     
     if let Ok(library) = library_service().lock() {
         if let Ok(artists) = library.get_all_artists() {
-            return artists;
+            let mut final_artists: Vec<Artist> = Vec::new();
+            for artist in artists {
+                if let Ok(albums) = library.get_albums_by_artist(artist.id.unwrap()) {
+                    if !albums.is_empty() {
+                        final_artists.push(artist);
+                    }
+                }
+            }
+            return final_artists;
         }
     }
 

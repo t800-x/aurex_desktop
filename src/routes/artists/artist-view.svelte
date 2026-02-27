@@ -76,6 +76,10 @@
                             </div>
                         </div>
                     </div>
+
+                    {#if index === albums.length -1}
+                        <div style="height: 80px;"></div>
+                    {/if}
                 {/snippet}
             </VList>
     {/if}

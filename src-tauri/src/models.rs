@@ -4,6 +4,15 @@ use specta::{specta, Type};
 
 
 // ---------------------------------------------------------------------------
+// Search Result
+//
+#[derive(Clone, Serialize, Deserialize, Debug, Type)]
+pub struct SearchResults {
+    pub tracks: Vec<FullTrack>,
+    pub albums: Vec<Album>
+}
+
+// ---------------------------------------------------------------------------
 // Artist
 // ---------------------------------------------------------------------------
 

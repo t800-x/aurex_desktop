@@ -8,6 +8,7 @@
     import { commands, type Playlist } from "$lib/bindings";
     import { onMount } from "svelte";
     import PlaylistIcon from "$lib/icons/playlist-icon.svelte";
+    import SearchIcon from "$lib/icons/search-icon.svelte";
 
 
     const width = 268;
@@ -38,6 +39,10 @@
 </script>
 
 <div class="navbar">
+    <NavbarItem text="Search" Icon={SearchIcon} section={Section.search} iconSize={22}/>
+
+    <div style="height: 20px"></div>
+
     <NavbarLabel text={'Library'} />
     {#each items as item}
         <NavbarItem Icon={item.icon} section={item.section} text={item.title}/>

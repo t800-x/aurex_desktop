@@ -6,10 +6,12 @@
     text,
     Icon,
     section,
+    iconSize = 20
   }: {
     text: string;
     Icon: any;
     section: Section;
+    iconSize?: number;
   } = $props();
   
   let selected = $derived(router.current === section);
@@ -21,7 +23,7 @@
   class:selected
   onclick={() => router.go(section)}
 >
-  <Icon className="nav-icon" size={20}/>
+  <Icon className="nav-icon" size={iconSize}/>
   <span>{text}</span>
 </button>
 

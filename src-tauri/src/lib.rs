@@ -44,6 +44,7 @@ pub fn run() {
         media_lib_cmd::get_playlist_tracks,
         media_lib_cmd::get_all_playlists,
         media_lib_cmd::get_playlist,
+        media_lib_cmd::search,
 
         audio_player::get_player,
         audio_player::play,

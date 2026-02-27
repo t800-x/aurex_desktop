@@ -133,7 +133,7 @@
 
     .trackTitle{
         font-size: 14px;
-        font-weight: w500;
+        font-weight: 500;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
