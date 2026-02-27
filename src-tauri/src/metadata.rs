@@ -19,7 +19,7 @@ pub async fn index() {
 }
 
 pub fn index_tracks() {
-    println!("Begin Indexing");
+    println!("Begin Indexing tracks");
 
     let files = get_all_audio_files();
     for file in files {
@@ -51,100 +51,105 @@ pub fn index_tracks() {
 
         if !result {
             //Extract Tags
-            let tagged_file = Probe::open(file.clone())
-                .expect("ERROR: Bad Path provided")
-                .read()
-                .expect("ERROR: Failed to read file");
+            if let Ok(probe_bufreader_file) = Probe::open(file.clone()) {
+                if let Ok(tagged_file) = probe_bufreader_file.read() {
 
-            let tag = match tagged_file.primary_tag() {
-                Some(primary_tag) => primary_tag,
-                None => tagged_file.first_tag().expect("ERROR: No tags found"),
-            };
+                    let tag = match tagged_file.primary_tag() {
+                        Some(primary_tag) => primary_tag,
+                        None => tagged_file.first_tag().expect("ERROR: No tags found"),
+                    };
 
-            let props = tagged_file.properties();
+                    let props = tagged_file.properties();
 
-            let parse_tag = |key: ItemKey| tag.get_string(key).and_then(|s| s.parse::<i64>().ok());
+                    let parse_tag = |key: ItemKey| tag.get_string(key).and_then(|s| s.parse::<i64>().ok());
 
-            let year = tag
-                .get_string(ItemKey::RecordingDate)
-                .or_else(|| tag.get_string(ItemKey::Year))
-                .and_then(|date_str| {
-                    date_str
-                        .chars()
-                        .take(4)
-                        .collect::<String>()
-                        .parse::<i64>()
-                        .ok()
-                });
-            let track_num = parse_tag(ItemKey::TrackNumber);
-            let disc_num = parse_tag(ItemKey::DiscNumber);
-            let bpm = parse_tag(ItemKey::Bpm);
+                    let year = tag
+                        .get_string(ItemKey::RecordingDate)
+                        .or_else(|| tag.get_string(ItemKey::Year))
+                        .and_then(|date_str| {
+                            date_str
+                                .chars()
+                                .take(4)
+                                .collect::<String>()
+                                .parse::<i64>()
+                                .ok()
+                        });
+                    let track_num = parse_tag(ItemKey::TrackNumber);
+                    let disc_num = parse_tag(ItemKey::DiscNumber);
+                    let bpm = parse_tag(ItemKey::Bpm);
 
-            let result = guard.add_track_with_metadata(
-                file.to_str().unwrap(),
-                tag.title().as_deref(),
-                tag.artist().as_deref(),
-                tag.get_string(ItemKey::AlbumArtist),
-                tag.album().as_deref(),
-                None,
-                tag.genre().as_deref(),
-                Some(props.duration().as_secs() as i64),
-                year,
-                track_num,
-                disc_num,
-                bpm,
-                tag.get_string(ItemKey::InitialKey),
-                tag.get_string(ItemKey::Isrc),
-                tag.get_string(ItemKey::Lyrics),
-                tag.get_string(ItemKey::Composer),
-            );
+                    let result = guard.add_track_with_metadata(
+                        file.to_str().unwrap(),
+                        tag.title().as_deref(),
+                        tag.artist().as_deref(),
+                        tag.get_string(ItemKey::AlbumArtist),
+                        tag.album().as_deref(),
+                        None,
+                        tag.genre().as_deref(),
+                        Some(props.duration().as_secs() as i64),
+                        year,
+                        track_num,
+                        disc_num,
+                        bpm,
+                        tag.get_string(ItemKey::InitialKey),
+                        tag.get_string(ItemKey::Isrc),
+                        tag.get_string(ItemKey::Lyrics),
+                        tag.get_string(ItemKey::Composer),
+                    );
 
-            match result {
-                Ok(()) => {}
-                Err(e) => {
-                    eprint!("{}", e);
-                    continue;
-                }
-            };
+                    match result {
+                        Ok(()) => {}
+                        Err(e) => {
+                            eprint!("{}", e);
+                            continue;
+                        }
+                    };
 
-            //Generate Image Cache
-            let picture = tag
-                .pictures()
-                .iter()
-                .find(|p| p.pic_type() == PictureType::CoverFront)
-                .or_else(|| tag.pictures().first())
-                .ok_or("No embedded pictures found");
+                    //Generate Image Cache
+                    let picture = tag
+                        .pictures()
+                        .iter()
+                        .find(|p| p.pic_type() == PictureType::CoverFront)
+                        .or_else(|| tag.pictures().first())
+                        .ok_or("No embedded pictures found");
 
-            match picture {
-                Ok(pic) => {
-                    let album_id = guard.get_album_id_by_path(file.to_str().unwrap());
+                    match picture {
+                        Ok(pic) => {
+                            let album_id = guard.get_album_id_by_path(file.to_str().unwrap());
 
-                    match album_id {
-                        Ok(id) => {
-                            let mime_type = pic.mime_type();
+                            match album_id {
+                                Ok(id) => {
+                                    let mime_type = pic.mime_type();
 
-                            if let Some(mime) = mime_type {
-                                let ext = mime.as_str().split('/').last().unwrap_or("jpg");
-                                let output_path =
-                                    cover_cache().join(format!("{}.{}", id.unwrap(), ext));
-                                let file = File::create(output_path.clone());
+                                    if let Some(mime) = mime_type {
+                                        let ext = mime.as_str().split('/').last().unwrap_or("jpg");
+                                        let output_path =
+                                            cover_cache().join(format!("{}.{}", id.unwrap(), ext));
+                                        let file = File::create(output_path.clone());
 
-                                match file {
-                                    Ok(mut file) => {
-                                        let res = file.write_all(pic.data());
-                                        _ = guard.update_album_art(id.unwrap(), Some(output_path.to_str().unwrap()));
-                                        if res.is_err() {
-                                            eprintln!(
-                                                "Failed to write image: {}",
-                                                res.err().unwrap()
-                                            )
+                                        match file {
+                                            Ok(mut file) => {
+                                                let res = file.write_all(pic.data());
+                                                _ = guard.update_album_art(id.unwrap(), Some(output_path.to_str().unwrap()));
+                                                if res.is_err() {
+                                                    eprintln!(
+                                                        "Failed to write image: {}",
+                                                        res.err().unwrap()
+                                                    )
+                                                }
+                                            }
+
+                                            Err(e) => {
+                                                eprintln!("{}", e);
+                                                continue;
+                                            }
                                         }
                                     }
+                                }
 
-                                    Err(e) => {
-                                        eprintln!("{}", e);
-                                        continue;
-                                    }
+                                Err(e) => {
+                                    eprintln!("{}", e);
+                                    continue;
                                 }
                             }
                         }
@@ -155,19 +160,16 @@ pub fn index_tracks() {
                         }
                     }
                 }
-
-                Err(e) => {
-                    eprintln!("{}", e);
-                    continue;
-                }
             }
         }
     }
 
-    println!("Done indexing");
+    println!("Done indexing tracks");
 }
 
 pub fn index_playlists() {
+    println!("Begin indexing playlists");
+
     let files = get_m3u8_files();
 
     for file in files {
@@ -199,6 +201,8 @@ pub fn index_playlists() {
             }
         }
     }
+
+    println!("End indexing playlists");
 }
 
 fn get_playlist_track_paths(m3u8_file: PathBuf) -> VecDeque<PathBuf> {

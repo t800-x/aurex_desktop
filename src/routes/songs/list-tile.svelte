@@ -5,6 +5,7 @@
     import { commands } from "$lib/bindings";
     import { formatDuration } from "$lib/helpers";
     import { loadAndPlay } from "$lib/helpers";
+    import TrackContextMenu from "$lib/ui/track-context-menu.svelte";
 
     let {
         track,
@@ -13,7 +14,7 @@
     } : {
         track: FullTrack;
         index: number;
-        playList: (e: MouseEvent) => void;
+        playList: () => void;
     } = $props();
 
     
@@ -32,22 +33,7 @@
         </div>
     </ContextMenu.Trigger>
 
-    <ContextMenu.Content onInteractOutside={(e) => e.stopPropagation()}>
-        <ContextMenu.Item onclick={async () => {
-            await loadAndPlay(track);
-        }}>
-            Play
-        </ContextMenu.Item>
-        
-        <ContextMenu.Item
-            onclick={(e) => playList(e)}
-        >
-            Play from here
-        </ContextMenu.Item>
-
-        <ContextMenu.Item onclick={async () => commands.playNext(track)}>Play Next</ContextMenu.Item>
-        <ContextMenu.Item onclick={async () => commands.addToQueue(track)}>Add to Queue</ContextMenu.Item>
-    </ContextMenu.Content>
+    <TrackContextMenu track={track} playList={playList} />
 
 </ContextMenu.Root>
 

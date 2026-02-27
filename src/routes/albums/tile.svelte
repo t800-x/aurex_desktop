@@ -1,9 +1,11 @@
 <script lang="ts">
-  import type { Track } from "$lib/bindings";
+  import type { FullTrack, Track } from "$lib/bindings";
   import { formatDuration, loadAndPlay } from "$lib/helpers";
   import PlayIcon from "$lib/icons/play-icon.svelte";
   import { commands } from "$lib/bindings";
   import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
+  import TrackContextMenu from "$lib/ui/track-context-menu.svelte";
+  import { onMount } from "svelte";
 
   let {
     track,
@@ -14,6 +16,10 @@
     playList: () => void;
     index: number;
   } = $props();
+
+  let fulltrack: FullTrack | null = $state(null);
+
+  onMount(async () => fulltrack = await commands.fulltrackFromId(Number(track.id)));
 
   let hovered = $state(false);
 </script>
@@ -49,37 +55,7 @@
     </div>
   </ContextMenu.Trigger>
 
-  <ContextMenu.Content onInteractOutside={(e) => e.stopPropagation()}>
-        <ContextMenu.Item onclick={async () => {
-            let fulltrack = await commands.fulltrackFromId(Number(track.id));
-            if (fulltrack !== null) {
-              loadAndPlay(fulltrack);
-            }
-        }}>
-            Play
-        </ContextMenu.Item>
-        
-        <ContextMenu.Item
-            onclick={() => playList()}
-        >
-            Play from here
-        </ContextMenu.Item>
-
-        <ContextMenu.Item onclick={async () => {
-            let fulltrack = await commands.fulltrackFromId(Number(track.id));
-            if (fulltrack !== null) {
-              commands.playNext(fulltrack)
-            }
-          }}>
-          Play Next
-        </ContextMenu.Item>
-        <ContextMenu.Item onclick={async () => {
-          let fulltrack = await commands.fulltrackFromId(Number(track.id));
-            if (fulltrack !== null) {
-              commands.addToQueue(fulltrack)
-            }
-        }}>Add to Queue</ContextMenu.Item>
-    </ContextMenu.Content>
+  <TrackContextMenu track={fulltrack!} playList={playList}/>
 
 </ContextMenu.Root>
 
