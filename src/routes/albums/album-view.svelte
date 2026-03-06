@@ -161,7 +161,7 @@
         height: 90%;
         filter: blur(20px);
         opacity: 0.7;
-        transform: scale(1.001); /* let it bleed past the edges */
+        transform: scale(1.05); /* let it bleed past the edges */
         z-index: 0;
     }
 
