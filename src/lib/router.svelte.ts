@@ -1,3 +1,5 @@
+import type { Album } from "./bindings";
+
 export enum Section {
     search = 1,
     songs,
@@ -15,11 +17,25 @@ class Router {
     rightPaneContent = $state<RightPaneContent | null>(null);
     rightPaneOverlaying = $state(false);
 
+    // Navigation targets set by external callers (e.g. search page).
+    // Destination pages watch these and clear them once consumed.
+    pendingAlbum = $state<Album | null>(null);
+    pendingArtistId = $state<number | null>(null);
+
     constructor() {}
 
     go(s: Section): void {
         this.current = s;
-        console.log("Current Section: " + this.current);
+    }
+
+    goToAlbum(album: Album): void {
+        this.pendingAlbum = album;
+        this.current = Section.albums;
+    }
+
+    goToArtist(artistId: number): void {
+        this.pendingArtistId = artistId;
+        this.current = Section.artists;
     }
 
     setRightPaneContent(content: RightPaneContent | null): void {
@@ -27,7 +43,6 @@ class Router {
             this.rightPaneContent = null;
             return;
         }
-
         this.rightPaneContent = content;
     }
 }

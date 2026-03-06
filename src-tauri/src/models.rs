@@ -7,9 +7,25 @@ use specta::{specta, Type};
 // Search Result
 //
 #[derive(Clone, Serialize, Deserialize, Debug, Type)]
+pub enum MatchReason {
+    Title,
+    Artist,
+    Album,
+    Lyrics,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, Type)]
+pub struct TrackResult {
+    pub track: FullTrack,
+    pub reasons: Vec<MatchReason>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, Type, Default)]
 pub struct SearchResults {
-    pub tracks: Vec<FullTrack>,
-    pub albums: Vec<Album>
+    pub tracks: Vec<TrackResult>,
+    pub albums: Vec<Album>,
+    pub artists: Vec<Artist>,
+    pub playlists: Vec<Playlist>,
 }
 
 // ---------------------------------------------------------------------------

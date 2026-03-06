@@ -9,9 +9,11 @@
     import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
 
     let {
-        album
+        album,
+        onclick,
     } : {
         album: Album;
+        onclick?: () => void;
     } = $props();
 
     // svelte-ignore state_referenced_locally
@@ -24,15 +26,15 @@
         artist = await commands.getArtistById(Number(album.artist_id));
         tracks = await commands.getAlbumTracks(Number(album.id));
     });
-
 </script>
 
 <ContextMenu.Root>
     <ContextMenu.Trigger>
-        <div class="card">
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <div class="card" onclick={onclick}>
 
             <div class="coverContainer">
-
                 {#if album.album_art !== null}
                     <img class="albumCover" src={imgSrc} alt="">
                 {:else}
@@ -41,19 +43,14 @@
                     </div>
                 {/if}
 
-                <CardButton class="cardButton" Icon={PlayIcon} onclick={async () => {
-                    commands.playTracks(tracks!, 0)
+                <CardButton class="cardButton" Icon={PlayIcon} onclick={async (e) => {
+                    commands.playTracks(tracks!, 0);
                 }}/>
             </div>
 
-            <div class="label title">
-                {album.title}
-            </div>
+            <div class="label title">{album.title}</div>
+            <div class="label artist">{artist?.name}</div>
 
-            <div class="label artist">
-                {artist?.name}
-            </div>
-        
         </div>
     </ContextMenu.Trigger>
 
@@ -65,7 +62,6 @@
 </ContextMenu.Root>
 
 <style>
-
     .card {
         display: flex;
         flex-direction: column;
@@ -74,8 +70,6 @@
         width: 205px;
         min-width: 0;
         cursor: default;
-        
-
         transition: transform 0.15s ease-in-out;
     }
 
@@ -115,12 +109,6 @@
         text-overflow: ellipsis;
     }
 
-    .title {
-        font-size: 15px;
-    }
-
-    .artist {
-        color: var(--color-navbar-label);
-        font-size: 13px;
-    }
+    .title  { font-size: 15px; }
+    .artist { color: var(--color-navbar-label); font-size: 13px; }
 </style>

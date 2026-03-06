@@ -193,10 +193,12 @@ export type Artist = { id: bigint | null; name: string; genre: string | null }
 export type AudioPlayer = { currently_playing: FullTrack | null; state: PlayerState; queue: FullTrack[]; position: number }
 export type FullTrack = { track: Track; artist_name: string; album_title: string; album_art: string | null; playlist_position: bigint | null }
 export type LineLyrics = { start_time: number; end_time: number | null; line: string; writers: string }
+export type MatchReason = "Title" | "Artist" | "Album" | "Lyrics"
 export type PlayerState = "Paused" | "Playing" | "Empty" | "Stopped"
 export type Playlist = { id: bigint | null; name: string; cover_path: string | null; created_at: bigint }
-export type SearchResults = { tracks: FullTrack[]; albums: Album[] }
+export type SearchResults = { tracks: TrackResult[]; albums: Album[]; artists: Artist[]; playlists: Playlist[] }
 export type Track = { id: bigint | null; album_id: bigint; artist_id: bigint; file_path: string; title: string; track_number: bigint; disc_number: bigint; bpm: bigint; duration: bigint; initial_key: string | null; isrc: string | null; lyrics: string | null; composer: string | null }
+export type TrackResult = { track: FullTrack; reasons: MatchReason[] }
 
 /** tauri-specta globals **/
 
