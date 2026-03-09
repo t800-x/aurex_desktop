@@ -1,5 +1,30 @@
 use std::collections::HashMap;
+use tauri::{AppHandle, Emitter};
+
 use crate::{library_service::library_service, models::{Album, Artist, FullTrack, MatchReason, Playlist, SearchResults, Track, TrackResult}};
+
+#[tauri::command]
+#[specta::specta]
+pub async fn delete_playlist(app_handle: AppHandle, id: i32) {
+    let _ = library_service()
+        .lock()
+        .map(|library| {
+            _ = library.delete_playlist(id as i64);
+
+            _ = app_handle.emit("playlists-changed", ());
+        }); 
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn create_playlist(app_handle: AppHandle,name: String) {
+    let _ = library_service()
+        .lock()
+        .map(|library| {
+            _ = library.create_playlist(name.as_str(), None);
+            _ = app_handle.emit("playlists-changed", ());
+        }); 
+}
 
 fn score_track(track: &FullTrack, term: &str) -> u32 {
     let title  = track.track.title.to_lowercase();

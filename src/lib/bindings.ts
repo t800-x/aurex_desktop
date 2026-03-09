@@ -62,6 +62,12 @@ async getPlaylist(id: number) : Promise<Playlist | null> {
 async search(term: string) : Promise<SearchResults> {
     return await TAURI_INVOKE("search", { term });
 },
+async createPlaylist(name: string) : Promise<void> {
+    await TAURI_INVOKE("create_playlist", { name });
+},
+async deletePlaylist(id: number) : Promise<void> {
+    await TAURI_INVOKE("delete_playlist", { id });
+},
 async getPlayer() : Promise<Result<AudioPlayer, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_player") };

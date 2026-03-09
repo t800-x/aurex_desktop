@@ -9,14 +9,23 @@
     import { onMount } from "svelte";
     import PlaylistIcon from "$lib/icons/playlist-icon.svelte";
     import SearchIcon from "$lib/icons/search-icon.svelte";
-
+    import NewPlaylistButton from "./new-playlist-button.svelte";
+    import PlusIcon from "$lib/icons/plus-icon.svelte";
+    import { listen } from "@tauri-apps/api/event";
+    import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
+    import PlaylistContextMenu from "./playlist-context-menu.svelte";
 
     const width = 268;
 
     let playlists: Playlist[] = $state([]);
     let playlistsEmpty = $derived(playlists.length === 0);
 
-    onMount(async () => playlists = await commands.getAllPlaylists());
+    onMount(async () => {
+        playlists = await commands.getAllPlaylists();
+        await listen<void>('playlists-changed', async (event) => {
+            playlists = await commands.getAllPlaylists();
+        })
+    });
 
     // Menu items.
     const items = [
@@ -39,7 +48,7 @@
 </script>
 
 <div class="navbar">
-    <NavbarItem text="Search" Icon={SearchIcon} section={Section.search} iconSize={22}/>
+<NavbarItem text="Search" Icon={SearchIcon} section={Section.search} iconSize={22}/>
 
     <div style="height: 20px"></div>
 
@@ -50,11 +59,18 @@
 
     <div style="height: 20px"></div>
 
-    {#if !playlistsEmpty}
-        <NavbarLabel text={"Playlists"} />
+    <NavbarLabel text={"Playlists"} />
+    <NewPlaylistButton text="Create Playlist" Icon={PlusIcon} />
 
+    {#if !playlistsEmpty}
         {#each playlists as playlist}
-            <NavbarItem Icon={PlaylistIcon} section={`pl-${playlist.id}` as unknown as Section} text={playlist.name} />
+            <ContextMenu.Root>
+                <ContextMenu.Trigger style="display: block; width: 100%;">
+                    <NavbarItem Icon={PlaylistIcon} section={`pl-${playlist.id}` as unknown as Section} text={playlist.name} />
+                </ContextMenu.Trigger>
+
+                <PlaylistContextMenu playlist={playlist} />
+            </ContextMenu.Root>
         {/each}
     {/if}
 </div>

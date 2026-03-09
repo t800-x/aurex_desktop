@@ -11,7 +11,6 @@
 
   let searchTerms = $state("");
   $effect(() => {
-    console.log(searchTerms);
     onchanged(searchTerms);
   });
 </script>

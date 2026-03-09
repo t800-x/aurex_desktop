@@ -11,7 +11,8 @@
   import RightPane from "$lib/ui/right-pane.svelte";
   import PlaylistPage from "./playlist/playlist_page.svelte";
   import { router } from "$lib/router.svelte";
-  
+  import CreatePlaylistDialog from "$lib/ui/create-playlist-dialog.svelte";
+  import DeletePlaylistDialog from "$lib/ui/delete-playlist-dialog.svelte";
 
   let blocked = $derived(router.rightPaneContent !== null && router.rightPaneOverlaying);
 </script>
@@ -30,6 +31,9 @@
 
     <RightPane/>
   </div>
+
+  <CreatePlaylistDialog />
+  <DeletePlaylistDialog />
 </div>
 
 <style>

@@ -1,42 +1,41 @@
 <script lang="ts">
   import { router } from "$lib/router.svelte";
-  import { Section } from "$lib/router.svelte";
+    import CreatePlaylistDialog from "./create-playlist-dialog.svelte";
 
   let {
     text,
     Icon,
-    section,
     iconSize = 20
   }: {
     text: string;
     Icon: any;
-    section: Section;
     iconSize?: number;
   } = $props();
   
-  let selected = $derived(router.current === section);
 
 </script>
 
+
 <button
-  class="nav-item"
-  class:selected
-  onclick={() => router.go(section)}
->
-  <Icon className="nav-icon" size={iconSize}/>
-  <span>{text}</span>
+    class="nav-item"
+    onclick={() => {
+      router.openCreatePlaylistDialog();
+      console.log("create playlist")
+    }}
+    >
+    <Icon className="nav-icon" size={iconSize}/>
+    <span>{text}</span>
 </button>
 
 <style>
   .nav-item {
-    margin: 0; 
-    padding-left: 10px;
-    padding-right: 10px; 
-    width: 100%;
     display: flex;
     align-items: center;
     gap: 10px;
+    padding-left: 10px;
+    margin: 0 20px;
     height: 28px;
+    width: 100%;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -47,15 +46,6 @@
   
   .nav-item:hover {
     background: rgba(255, 255, 255, 0.1);
-  }
-  
-  .nav-item.selected {
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.15);
-  }
-  
-  .nav-item.selected:hover {
-    background: rgba(255, 255, 255, 0.2);
   }
 
   .nav-item:active {

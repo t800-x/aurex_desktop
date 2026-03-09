@@ -1,4 +1,4 @@
-import type { Album } from "./bindings";
+import type { Album, Playlist } from "./bindings";
 
 export enum Section {
     search = 1,
@@ -22,7 +22,29 @@ class Router {
     pendingAlbum = $state<Album | null>(null);
     pendingArtistId = $state<number | null>(null);
 
+    isCreatePlaylistDialogOpen = $state(false);
+
+    isDeletePlaylistDialogOpen = $state(false);
+    pendingDeletePlaylist = $state<Playlist | null>(null);
+
     constructor() {}
+
+    openDeletePlaylistDialog(playlist: Playlist) {
+        this.pendingDeletePlaylist = playlist;
+        this.isDeletePlaylistDialogOpen = true;
+    }
+    closeDeletePlaylistDialog() {
+        this.isDeletePlaylistDialogOpen = false;
+        this.pendingDeletePlaylist = null;
+    }
+
+    openCreatePlaylistDialog() {
+        this.isCreatePlaylistDialogOpen = true;
+    }
+
+    closeCreatePlaylistDialog() {
+        this.isCreatePlaylistDialogOpen = false;
+    }
 
     go(s: Section): void {
         this.current = s;
