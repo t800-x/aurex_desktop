@@ -15,8 +15,11 @@
 </script>
 
 <div class="playbackControls">
-    <button class="playbackControlButton secondaryControl">
-        <ShuffleIcon size={18}/>
+    <button class="playbackControlButton secondaryControl shuffleBtn" class:enabledControl={audioPlayer.shuffle} onclick={() => commands.shuffle()}>
+        <ShuffleIcon size={18} />
+        {#if audioPlayer.shuffle}
+            <span class="shuffleDot" transition:scale></span>
+        {/if}
     </button>
 
     <button class="playbackControlButton primaryControl">
@@ -52,6 +55,10 @@
 </div>
 
 <style>
+    .enabledControl :global(i) {
+        color: var(--color-accent);
+    }
+
     .playbackControls {
         flex: 25;
         display: flex;
@@ -63,6 +70,8 @@
         padding: 5px;
         border-radius: 40px;
         cursor: default;
+
+        transition: color 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
     }
 
     .playbackControlButton:hover {
@@ -81,15 +90,29 @@
         align-items: center;
         justify-content: center;
         position: relative;
-        transition: transform 0.15s ease, background-color 0.15s ease;
     }
 
     .primaryControl:hover {
         background-color: var(--color-hover);
-        transform: scale(1.1);
     }
 
     .primaryControl:active {
         transform: scale(0.92);
+    }
+
+    .shuffleBtn {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .shuffleDot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: var(--color-accent);
+        position: absolute;
+        bottom: 3px;
     }
 </style>

@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::{library_service::library_service, models::{FullTrack, Track}};
+use crate::{library_service::library_service, models::{FullTrack, Track}, traits::Shuffle};
 use libaurex::{aurex::Player, enums::EngineSignal};
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -17,7 +17,7 @@ fn player_callback(event: EngineSignal, app_handle: AppHandle) {
         if event == EngineSignal::MediaEnd {
             println!("Media ended");
 
-            let mut player = state.get().await;
+            let player = state.get().await;
 
             if player.queue.is_empty() {
                 drop(player);
@@ -30,6 +30,7 @@ fn player_callback(event: EngineSignal, app_handle: AppHandle) {
             let mut first_track: Option<FullTrack> = None;
             state.update(|player| {
                 first_track = player.queue.pop_front();
+                state.update_queue(&player);
             }).await;
 
             if let Some(track) = first_track {
@@ -93,8 +94,10 @@ pub enum PlayerState {
 #[derive(Clone, Serialize, Deserialize, Debug, Type)]
 pub struct AudioPlayer {
     currently_playing: Option<FullTrack>,
+    shuffle: bool,
     state: PlayerState,
-    queue: VecDeque<FullTrack>,
+    real_queue: VecDeque<FullTrack>,
+    queue: VecDeque<FullTrack>, // <- This is a proxy
     position: f64,
 }
 
@@ -102,7 +105,9 @@ impl Default for AudioPlayer {
     fn default() -> Self {
         AudioPlayer {
             currently_playing: None,
+            shuffle: false,
             state: PlayerState::Empty,
+            real_queue: VecDeque::new(),
             queue: VecDeque::new(),
             position: 0.0,
         }
@@ -203,7 +208,10 @@ pub async fn clear(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer
         .update(|player| {
             player.currently_playing = None;
             player.state = PlayerState::Empty;
+            player.real_queue.clear();
             player.queue.clear();
+
+            state.update_queue(&player);
         })
         .await;
 
@@ -228,12 +236,16 @@ pub async fn play_list(
     _ = play(state.clone()).await;
     
     state.update(|player| {
-        player.queue.clear();
+        player.real_queue.clear();
 
         while index < list.len()  {
-            player.queue.push_back(list[index].clone());
+            player.real_queue.push_back(list[index].clone());
             index += 1;
         }
+
+        player.queue = player.real_queue.clone();
+        state.update_queue(&player);
+
     }).await;
 
     Ok(state.get().await)
@@ -247,7 +259,9 @@ pub async fn play_next(
 ) -> Result<AudioPlayer, String> {
     state
         .update(|player| {
+            player.real_queue.push_front(track.clone());
             player.queue.push_front(track);
+            state.update_queue(&player);
         })
         .await;
 
@@ -262,7 +276,9 @@ pub async fn add_to_queue(
 ) -> Result<AudioPlayer, String> {
     state
         .update(|player| {
+            player.real_queue.push_back(track.clone());
             player.queue.push_back(track);
+            state.update_queue(&player);
         })
         .await;
 
@@ -338,6 +354,12 @@ pub async fn next(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer,
 
     state.update(|player|  {
         track = player.queue.pop_front();
+
+        if let Some(track) = track.clone() {
+            player.real_queue.retain(|m_track| m_track.track.id.unwrap_or(-1) != track.track.id.unwrap());
+        }
+
+        state.update_queue(&player);
     }).await;
 
     if let Some(t) = track {
@@ -365,8 +387,14 @@ pub async fn change_queue_index(
             }
 
             if let Some(track) = player.queue.remove(old_index) {
-                player.queue.insert(new_index, track);
+                player.queue.insert(new_index, track.clone());
+
+                if !player.shuffle {
+                    player.real_queue.insert(new_index, track);
+                }
             }
+
+            state.update_queue(&player);
         })
         .await;
 
@@ -379,6 +407,23 @@ pub async fn seek(time: f64) {
     let audio_engine = audio_player().lock().await;
     _ = audio_engine.seek(time).await;
 }
+
+#[tauri::command]
+#[specta::specta]
+pub async fn shuffle(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer, String> {
+    state.update(|player| {
+        player.queue.clone_from(&player.real_queue);
+        if !player.shuffle {
+            player.queue.shuffle();
+        }
+        player.shuffle = !player.shuffle;
+        state.update_queue(&player);
+    }).await;
+
+    Ok(state.get().await)
+}
+
+
 
 pub struct ManagedPlayer {
     pub player: Arc<Mutex<AudioPlayer>>,
@@ -399,11 +444,27 @@ impl ManagedPlayer {
     {
         let mut audio_player = self.player.lock().await;
         updater(&mut *&mut audio_player);
+        
+        let new_audio_player = AudioPlayer {
+            real_queue: VecDeque::new(),
+            queue: VecDeque::new(),
+            
+            currently_playing: audio_player.currently_playing.clone(),
+            shuffle: audio_player.shuffle.clone(),
+            state: audio_player.state.clone(),
+            position: audio_player.position.clone()
+        };
 
-        let _ = self.app.emit("player-changed", audio_player.clone());
+        //sending the payload without the queue data for now cause it can get big and cause slowdowns
+        let _ = self.app.emit("player-changed", new_audio_player);
     }
 
     pub async fn get(&self) -> AudioPlayer {
         self.player.lock().await.clone()
+    }
+
+    //function to manually emit signals specifically for queue
+    pub fn update_queue(&self, player: &AudioPlayer) {
+        let _ = self.app.emit("queue-changed", player.queue.clone());
     }
 }

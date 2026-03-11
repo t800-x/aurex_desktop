@@ -7,6 +7,10 @@
     import { router } from "$lib/router.svelte";
     import { convertFileSrc } from "@tauri-apps/api/core";
     import Tile from "../albums/tile.svelte";
+    import { listen } from "@tauri-apps/api/event";
+    import { event } from "@tauri-apps/api";
+    import { onMount } from "svelte";
+    import PlTile from "./pl-tile.svelte";
 
     let hidden = $derived(!router.current.toString().startsWith("pl-"));
     let playlist_id = $derived(Number(router.current.toString().match(/pl-(\d+)/)?.[1]));
@@ -47,6 +51,18 @@
         const idx = Math.floor(Math.random() * tracks.length);
         commands.playList(tracks, idx);
     }
+
+    onMount(async () => {
+        await listen<number> ('playlist-updated', async (event) => {
+            let id = event.payload;
+            if (isP_id) {
+                if (id === playlist_id) {
+                    playlist = await commands.getPlaylist(playlist_id);
+                    tracks = await commands.getPlaylistTracks(playlist_id); 
+                }
+            }
+        });
+    });
 </script>
 
 <div style:display={displayMode} class:hidden={hidden} class="playlistPage page">
@@ -90,10 +106,11 @@
 
     <div class="songs">
         {#each tracks as fulltrack, index}
-            <Tile
-                track={fulltrack.track}
+            <PlTile
+                track={fulltrack}
                 index={index}
                 playList={() => commands.playList(tracks, index)}
+                playlist={playlist}
             />
 
             {#if index === tracks.length - 1}

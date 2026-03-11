@@ -82,13 +82,22 @@ impl LineLyrics {
 
     fn parse_time(time_str: &str) -> f64 {
         let time_str = time_str.trim_matches('"');
-        if time_str.contains(':') {
-            let parts: Vec<&str> = time_str.splitn(2, ':').collect();
-            let minutes: f64 = parts[0].parse().unwrap_or(0.0);
-            let seconds: f64 = parts[1].parse().unwrap_or(0.0);
-            minutes * 60.0 + seconds
-        } else {
-            time_str.parse().unwrap_or(0.0)
+        let parts: Vec<&str> = time_str.splitn(3, ':').collect();
+        match parts.len() {
+            3 => {
+                // HH:MM:SS.mmm
+                let hours: f64 = parts[0].parse().unwrap_or(0.0);
+                let minutes: f64 = parts[1].parse().unwrap_or(0.0);
+                let seconds: f64 = parts[2].parse().unwrap_or(0.0);
+                hours * 3600.0 + minutes * 60.0 + seconds
+            }
+            2 => {
+                // MM:SS.xx
+                let minutes: f64 = parts[0].parse().unwrap_or(0.0);
+                let seconds: f64 = parts[1].parse().unwrap_or(0.0);
+                minutes * 60.0 + seconds
+            }
+            _ => time_str.parse().unwrap_or(0.0),
         }
     }
 

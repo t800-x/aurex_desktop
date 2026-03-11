@@ -11,5 +11,5 @@
 </script>
 
 <ContextMenu.Content onInteractOutside={(e) => e.stopPropagation()}>
-    <ContextMenu.Item onclick={() => router.openDeletePlaylistDialog(playlist)}>Delete Playlist</ContextMenu.Item>
+    <ContextMenu.Item variant="destructive" onclick={() => router.openDeletePlaylistDialog(playlist)}>Delete Playlist</ContextMenu.Item>
 </ContextMenu.Content>

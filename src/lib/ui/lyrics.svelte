@@ -68,11 +68,27 @@
             localTrack = audioPlayer.currentlyPlaying;
             if (audioPlayer.currentlyPlaying) {
                 commands.getLineLyrics(audioPlayer.currentlyPlaying).then((l) => {
-                    line_lyrics = l ?? [];
+                    const raw = l ?? [];
+                    line_lyrics = raw.map((line, i) => {
+                        const prevStart = raw[i - 1]?.start_time;
+                        const cleaned = {
+                            ...line,
+                            line: line.line.replace(/&quot;/g, '"')
+                                .replace(/&amp;/g, "&")
+                                .replace(/&apos;/g, "'")
+                                .replace(/&lt;/g, "<")
+                                .replace(/&gt;/g, ">")
+                        };
+                        if (prevStart === line.start_time && line.end_time != null) {
+                            return { ...cleaned, start_time: line.end_time };
+                        }
+                        return cleaned;
+                    });
                     itemEls = new Array(line_lyrics.length).fill(null);
                     scrollOffset = 0;
                     if (innerEl) innerEl.style.transform = 'translateY(0)';
                 });
+            
             } else {
                 line_lyrics = [];
                 itemEls = [];
@@ -84,7 +100,7 @@
 <div class="lyricsContainer">
     <div bind:this={listEl} class="lyricsDisplay">
         <div bind:this={innerEl} class="lyricsInner">
-            {#each line_lyrics as lyrics, index (lyrics.start_time)}
+            {#each line_lyrics as lyrics, index (`${index}-${lyrics.start_time}`)}
                 <div class="item-wrap" bind:this={itemEls[index]}>
                     <LineLyric {lyrics} active={index === activeIndex} />
                 </div>

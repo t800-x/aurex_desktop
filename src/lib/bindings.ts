@@ -68,6 +68,15 @@ async createPlaylist(name: string) : Promise<void> {
 async deletePlaylist(id: number) : Promise<void> {
     await TAURI_INVOKE("delete_playlist", { id });
 },
+async addToPlaylist(trackId: number | null, playlistId: number | null, targetPlaylistId: number) : Promise<void> {
+    await TAURI_INVOKE("add_to_playlist", { trackId, playlistId, targetPlaylistId });
+},
+async removeFromPlaylist(trackId: number, position: number, playlistId: number) : Promise<void> {
+    await TAURI_INVOKE("remove_from_playlist", { trackId, position, playlistId });
+},
+async getPlIdByName(name: string) : Promise<number | null> {
+    return await TAURI_INVOKE("get_pl_id_by_name", { name });
+},
 async getPlayer() : Promise<Result<AudioPlayer, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_player") };
@@ -175,6 +184,14 @@ async playListNext(fulltracks: FullTrack[] | null, tracks: Track[] | null) : Pro
     else return { status: "error", error: e  as any };
 }
 },
+async shuffle() : Promise<Result<AudioPlayer, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("shuffle") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async fulltrackFromId(id: number) : Promise<FullTrack | null> {
     return await TAURI_INVOKE("fulltrack_from_id", { id });
 },
@@ -196,7 +213,7 @@ async getLineLyrics(track: FullTrack) : Promise<LineLyrics[]> {
 export type Album = { id: bigint | null; artist_id: bigint; title: string; year: bigint; genre: string | null; album_art: string | null }
 export type AppState = { clicks: number }
 export type Artist = { id: bigint | null; name: string; genre: string | null }
-export type AudioPlayer = { currently_playing: FullTrack | null; state: PlayerState; queue: FullTrack[]; position: number }
+export type AudioPlayer = { currently_playing: FullTrack | null; shuffle: boolean; state: PlayerState; real_queue: FullTrack[]; queue: FullTrack[]; position: number }
 export type FullTrack = { track: Track; artist_name: string; album_title: string; album_art: string | null; playlist_position: bigint | null }
 export type LineLyrics = { start_time: number; end_time: number | null; line: string; writers: string }
 export type MatchReason = "Title" | "Artist" | "Album" | "Lyrics"

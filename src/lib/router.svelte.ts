@@ -1,4 +1,4 @@
-import type { Album, Playlist } from "./bindings";
+import type { Album, FullTrack, Playlist } from "./bindings";
 
 export enum Section {
     search = 1,
@@ -23,6 +23,7 @@ class Router {
     pendingArtistId = $state<number | null>(null);
 
     isCreatePlaylistDialogOpen = $state(false);
+    trackToAddAfterCreating = $state<FullTrack | null>(null);
 
     isDeletePlaylistDialogOpen = $state(false);
     pendingDeletePlaylist = $state<Playlist | null>(null);
@@ -38,12 +39,14 @@ class Router {
         this.pendingDeletePlaylist = null;
     }
 
-    openCreatePlaylistDialog() {
+    openCreatePlaylistDialog(addTrack: FullTrack | null) {
         this.isCreatePlaylistDialogOpen = true;
+        this.trackToAddAfterCreating = addTrack;
     }
 
     closeCreatePlaylistDialog() {
         this.isCreatePlaylistDialogOpen = false;
+        this.trackToAddAfterCreating = null;
     }
 
     go(s: Section): void {

@@ -9,6 +9,15 @@
         else dialog.close();
     });
 
+    async function addToPlaylist() {
+        if (router.trackToAddAfterCreating !== null) {
+            let p_id = await commands.getPlIdByName(name);
+            if (p_id !== null) {
+                commands.addToPlaylist(Number(router.trackToAddAfterCreating.track.id), null, p_id);
+            }
+        }
+    }
+
     let name = $state("");
 </script>
 
@@ -49,6 +58,7 @@
         <div class="bottomButtonContainer">
             <button class:disabledBtn={name.length === 0} class="bottomButton createBtn" onclick={() => {
                 commands.createPlaylist(name);
+                addToPlaylist();
                 router.closeCreatePlaylistDialog();
             }}>Create</button>
         </div>

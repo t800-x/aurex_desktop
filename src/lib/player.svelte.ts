@@ -18,6 +18,7 @@ class PlayerManager {
     state = $state<PlayerState>(PlayerState.Empty);
     queue = $state<FullTrack[]>([]);
     position = $state<number>(0.0);
+    shuffle = $state<boolean>(false);
     lyricsLineIndex = $state<number | null>(null);
 
     private async init() {
@@ -30,6 +31,7 @@ class PlayerManager {
             this.queue = player.queue;
             this.state = player.state;
             this.position = player.position;
+            this.shuffle = player.shuffle;
         }
 
         await listen<AudioPlayer>('player-changed', (event) => {
@@ -43,8 +45,9 @@ class PlayerManager {
                 this.state = newPlayer.state;
             }
 
-            if (!areArraysEqual(this.queue ?? [], newPlayer.queue ?? [])) {
-                this.queue = newPlayer.queue;
+            if (this.shuffle !== newPlayer.shuffle) {
+                this.shuffle = newPlayer.shuffle;
+                console.log(`shuffle changed to: ${this.shuffle}`)
             }
         });
 
@@ -52,6 +55,14 @@ class PlayerManager {
             let postion = event.payload;
             if (this.position !== postion) {
                 this.position = postion;
+            }
+        });
+        
+        await listen<FullTrack[]> ('queue-changed', (event) => {
+            let newQ = event.payload;
+
+            if (!areArraysEqual(this.queue ?? [], newQ ?? [])) {
+                this.queue = newQ;
             }
         });
     }

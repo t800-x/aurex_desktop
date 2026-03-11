@@ -7,6 +7,7 @@ mod media_lib_cmd;
 mod metadata;
 mod models;
 mod lyrics;
+mod traits;
 
 use app_state::ManagedState;
 use std::fs::File;
@@ -47,6 +48,9 @@ pub fn run() {
         media_lib_cmd::search,
         media_lib_cmd::create_playlist,
         media_lib_cmd::delete_playlist,
+        media_lib_cmd::add_to_playlist,
+        media_lib_cmd::remove_from_playlist,
+        media_lib_cmd::get_pl_id_by_name,
 
         audio_player::get_player,
         audio_player::play,
@@ -62,6 +66,7 @@ pub fn run() {
         audio_player::play_tracks,
         audio_player::add_list_to_queue,
         audio_player::play_list_next,
+        audio_player::shuffle,
 
         library_service::fulltrack_from_id,
 

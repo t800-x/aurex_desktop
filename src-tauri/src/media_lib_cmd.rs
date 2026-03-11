@@ -5,6 +5,51 @@ use crate::{library_service::library_service, models::{Album, Artist, FullTrack,
 
 #[tauri::command]
 #[specta::specta]
+pub async fn get_pl_id_by_name(name: String) -> Option<i32> {
+    if let Ok(library) = library_service().lock() {
+        if let Ok(result) = library.get_playlist_id_by_name(name.as_str()) {
+            if let Some(id) = result {
+                return Some(id as i32);
+            }
+        }
+    }
+
+    None
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_from_playlist(track_id: i32, position: i32, playlist_id: i32, app_handle: AppHandle) {
+    if let Ok(library) = library_service().lock() {
+        _ = library.remove_track_from_playlist(playlist_id.into(), track_id.into(), position.into());
+        _ = app_handle.emit("playlist-updated", playlist_id);
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn add_to_playlist(track_id: Option<i32>, playlist_id: Option<i32>, target_playlist_id: i32, app_handle: AppHandle) {
+    if let Some(id) = track_id {
+        if let Ok(library) = library_service().lock() {
+            _ = library.add_track_to_playlist(target_playlist_id.into(), id.into());
+        }
+    }
+
+    if let Some(p_id) = playlist_id {
+        if let Ok(library) = library_service().lock() {
+            if let Ok(tracks) = library.get_tracks_in_playlist(p_id.into()) {
+                for track in tracks {
+                    _ = library.add_track_to_playlist(target_playlist_id.into(), track.track.id.unwrap());
+                }
+            }
+        }
+    }
+
+    _ = app_handle.emit("playlist-updated", target_playlist_id);
+}
+
+#[tauri::command]
+#[specta::specta]
 pub async fn delete_playlist(app_handle: AppHandle, id: i32) {
     let _ = library_service()
         .lock()
