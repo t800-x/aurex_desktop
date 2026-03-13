@@ -192,6 +192,14 @@ async shuffle() : Promise<Result<AudioPlayer, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async previous() : Promise<Result<AudioPlayer, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("previous") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async fulltrackFromId(id: number) : Promise<FullTrack | null> {
     return await TAURI_INVOKE("fulltrack_from_id", { id });
 },
@@ -213,9 +221,10 @@ async getLineLyrics(track: FullTrack) : Promise<LineLyrics[]> {
 export type Album = { id: bigint | null; artist_id: bigint; title: string; year: bigint; genre: string | null; album_art: string | null }
 export type AppState = { clicks: number }
 export type Artist = { id: bigint | null; name: string; genre: string | null }
-export type AudioPlayer = { currently_playing: FullTrack | null; shuffle: boolean; state: PlayerState; real_queue: FullTrack[]; queue: FullTrack[]; position: number }
+export type AudioPlayer = { currently_playing: FullTrack | null; shuffle: boolean; state: PlayerState; history: FullTrack[]; real_queue: FullTrack[]; queue: FullTrack[]; position: number; looping: LoopType }
 export type FullTrack = { track: Track; artist_name: string; album_title: string; album_art: string | null; playlist_position: bigint | null }
 export type LineLyrics = { start_time: number; end_time: number | null; line: string; writers: string }
+export type LoopType = "LoopOnce" | "LoopOver" | "Off"
 export type MatchReason = "Title" | "Artist" | "Album" | "Lyrics"
 export type PlayerState = "Paused" | "Playing" | "Empty" | "Stopped"
 export type Playlist = { id: bigint | null; name: string; cover_path: string | null; created_at: bigint }

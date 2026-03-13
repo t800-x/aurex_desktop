@@ -40,8 +40,8 @@ class Router {
     }
 
     openCreatePlaylistDialog(addTrack: FullTrack | null) {
-        this.isCreatePlaylistDialogOpen = true;
         this.trackToAddAfterCreating = addTrack;
+        this.isCreatePlaylistDialogOpen = true;
     }
 
     closeCreatePlaylistDialog() {

@@ -67,6 +67,7 @@ pub fn run() {
         audio_player::add_list_to_queue,
         audio_player::play_list_next,
         audio_player::shuffle,
+        audio_player::previous,
 
         library_service::fulltrack_from_id,
 

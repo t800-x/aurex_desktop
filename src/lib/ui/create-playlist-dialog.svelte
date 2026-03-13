@@ -10,12 +10,15 @@
     });
 
     async function addToPlaylist() {
-        if (router.trackToAddAfterCreating !== null) {
-            let p_id = await commands.getPlIdByName(name);
-            if (p_id !== null) {
-                commands.addToPlaylist(Number(router.trackToAddAfterCreating.track.id), null, p_id);
-            }
+        const trackContext = router.trackToAddAfterCreating;
+        if (trackContext === null || trackContext.track === null) return;
+
+        let p_id = await commands.getPlIdByName(name);
+        if (p_id !== null) {
+            await commands.addToPlaylist(Number(trackContext.track.id), null, p_id);
         }
+
+        router.trackToAddAfterCreating = null;
     }
 
     let name = $state("");
@@ -56,9 +59,9 @@
     ">
 
         <div class="bottomButtonContainer">
-            <button class:disabledBtn={name.length === 0} class="bottomButton createBtn" onclick={() => {
-                commands.createPlaylist(name);
-                addToPlaylist();
+            <button class:disabledBtn={name.length === 0} class="bottomButton createBtn" onclick={async () => {
+                await commands.createPlaylist(name);
+                await addToPlaylist().catch(console.error);
                 router.closeCreatePlaylistDialog();
             }}>Create</button>
         </div>

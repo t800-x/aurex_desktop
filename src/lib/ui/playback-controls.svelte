@@ -22,7 +22,7 @@
         {/if}
     </button>
 
-    <button class="playbackControlButton primaryControl">
+    <button class="playbackControlButton primaryControl" onclick={() => commands.previous()}>
         <PoppingButton>
             <PreviousIcon />
         </PoppingButton>

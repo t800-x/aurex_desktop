@@ -25,25 +25,7 @@ fn player_callback(event: EngineSignal, app_handle: AppHandle) {
                 return;
             }
 
-            let audio_engine = audio_player().lock().await;
-
-            let mut first_track: Option<FullTrack> = None;
-            state.update(|player| {
-                first_track = player.queue.pop_front();
-                state.update_queue(&player);
-            }).await;
-
-            if let Some(track) = first_track {
-                _ = audio_engine.clone().load(&track.track.file_path).await;
-                _ = audio_engine.play().await;
-
-                state
-                    .update(move |player| {
-                        player.currently_playing = Some(track);
-                        player.state = PlayerState::Playing;
-                    })
-                    .await;
-            }
+            _ = next(state.clone()).await;
         }
     });
 }
@@ -92,13 +74,22 @@ pub enum PlayerState {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, Type)]
+pub enum LoopType {
+    LoopOnce,
+    LoopOver,
+    Off
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, Type)]
 pub struct AudioPlayer {
     currently_playing: Option<FullTrack>,
     shuffle: bool,
     state: PlayerState,
+    history: VecDeque<FullTrack>,
     real_queue: VecDeque<FullTrack>,
     queue: VecDeque<FullTrack>, // <- This is a proxy
     position: f64,
+    looping: LoopType
 }
 
 impl Default for AudioPlayer {
@@ -107,9 +98,11 @@ impl Default for AudioPlayer {
             currently_playing: None,
             shuffle: false,
             state: PlayerState::Empty,
+            history: VecDeque::new(),
             real_queue: VecDeque::new(),
             queue: VecDeque::new(),
             position: 0.0,
+            looping: LoopType::Off
         }
     }
 }
@@ -352,14 +345,46 @@ pub async fn play_list_next(state: tauri::State<'_, ManagedPlayer>, fulltracks: 
 pub async fn next(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer, String> {
     let mut track: Option<FullTrack> = None;
 
-    state.update(|player|  {
+    state.update(|player| {
+        if let Some(current) = player.currently_playing.clone() {
+            player.history.push_back(current);
+        }
+
         track = player.queue.pop_front();
 
-        if let Some(track) = track.clone() {
-            player.real_queue.retain(|m_track| m_track.track.id.unwrap_or(-1) != track.track.id.unwrap());
+        if let Some(ref t) = track {
+            player.real_queue.retain(|m| m.track.id.unwrap_or(-1) != t.track.id.unwrap_or(-2));
         }
 
         state.update_queue(&player);
+        state.update_history(&player);
+    }).await;
+
+    if let Some(t) = track {
+        _ = load(state.clone(), t).await;
+        _ = play(state.clone()).await;
+    }
+
+    Ok(state.get().await)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn previous(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer, String> {
+    let mut track: Option<FullTrack> = None;
+
+    state.update(|player| {
+        track = player.history.pop_back();
+
+        if track.is_some() {
+            if let Some(current) = player.currently_playing.clone() {
+                player.queue.push_front(current.clone());
+                player.real_queue.push_front(current);
+            }
+
+            state.update_queue(&player);
+            state.update_history(&player);
+        }
     }).await;
 
     if let Some(t) = track {
@@ -448,11 +473,13 @@ impl ManagedPlayer {
         let new_audio_player = AudioPlayer {
             real_queue: VecDeque::new(),
             queue: VecDeque::new(),
+            history: VecDeque::new(),
             
             currently_playing: audio_player.currently_playing.clone(),
             shuffle: audio_player.shuffle.clone(),
             state: audio_player.state.clone(),
-            position: audio_player.position.clone()
+            position: audio_player.position.clone(),
+            looping: audio_player.looping.clone()
         };
 
         //sending the payload without the queue data for now cause it can get big and cause slowdowns
@@ -466,5 +493,9 @@ impl ManagedPlayer {
     //function to manually emit signals specifically for queue
     pub fn update_queue(&self, player: &AudioPlayer) {
         let _ = self.app.emit("queue-changed", player.queue.clone());
+    }
+
+    pub fn update_history(&self, player: &AudioPlayer) {
+        let _ = self.app.emit("history-changed", player.history.clone());
     }
 }

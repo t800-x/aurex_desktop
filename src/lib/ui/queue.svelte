@@ -75,7 +75,7 @@
             >There's no music in the queue.</div>
 
         {:else}
-            <VList data={audioPlayer.queue} style='height: 100%' getKey={(track: FullTrack) => track.track.id}>
+            <VList data={audioPlayer.queue} style='height: 100%' getKey={(track: FullTrack, i: number) => `${track.track.id}-${i}`}>
                 {#snippet children(track: FullTrack, index: number)}
                     <QueueTile
                         track={track}
