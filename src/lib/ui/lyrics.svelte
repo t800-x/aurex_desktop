@@ -1,24 +1,50 @@
 <script lang="ts">
-    import { commands, type FullTrack, type LineLyrics } from "$lib/bindings";
+    import { commands, type FullTrack, type Lyrics, type LineLyrics, type SyllableLine } from "$lib/bindings";
     import { audioPlayer } from "$lib/player.svelte";
-    import LineLyric from "./line-lyric.svelte";
+    import LyricLine from "./lyric-line.svelte";
 
-    let line_lyrics: LineLyrics[] = $state([]);
+    let lyrics = $state<Lyrics | null>(null);
+    let localTrack = $state<FullTrack | null>(null);
+
     // svelte-ignore non_reactive_update
-        let itemEls: Array<HTMLElement | null> = [];
+    let itemEls: Array<HTMLElement | null> = [];
     let listEl: HTMLDivElement | null = null;
     let innerEl: HTMLDivElement | null = null;
-    let localTrack = $state<FullTrack | null>(null);
     let scrollOffset = 0;
 
+    let lineItems = $derived<LineLyrics[]>(
+        !lyrics || lyrics.lyricstype !== "Line" || !lyrics.line_lyrics
+            ? []
+            : lyrics.line_lyrics.map((line, i) => {
+                if (lyrics!.line_lyrics![i - 1]?.start_time === line.start_time && line.end_time != null) {
+                    return { ...line, start_time: line.end_time };
+                }
+                return line;
+            })
+    );
+
+    let syllableItems = $derived<SyllableLine[]>(
+        !lyrics || lyrics.lyricstype !== "Syllable" || !lyrics.syllable_lyrics
+            ? []
+            : lyrics.syllable_lyrics.map((line, i) => {
+                if (lyrics!.syllable_lyrics![i - 1]?.start_time === line.start_time) {
+                    return { ...line, start_time: line.end_time };
+                }
+                return line;
+            })
+    );
+
     let activeIndex = $derived(
-        line_lyrics.reduce<number>((acc, line, i) => {
-            const effectiveEnd = line_lyrics[i + 1]?.start_time ?? line.end_time ?? Infinity;
-            if (audioPlayer.position >= line.start_time && audioPlayer.position < effectiveEnd) {
-                return i;
-            }
-            return acc;
-        }, -1)
+        (() => {
+            const items = lyrics?.lyricstype === "Syllable" ? syllableItems : lineItems;
+            return items.reduce<number>((acc, line, i) => {
+                const effectiveEnd = items[i + 1]?.start_time ?? line.end_time ?? Infinity;
+                if (audioPlayer.position >= line.start_time && audioPlayer.position < effectiveEnd) {
+                    return i;
+                }
+                return acc;
+            }, -1);
+        })()
     );
 
     let prevActiveIndex = $state(-1);
@@ -32,7 +58,6 @@
         const delta = newOffset - scrollOffset;
         scrollOffset = newOffset;
 
-        // Step 1: instantly displace all items by the delta so visually nothing has moved yet
         for (let i = 0; i < itemEls.length; i++) {
             const el = itemEls[i];
             if (!el) continue;
@@ -40,10 +65,8 @@
             el.style.transform = `translateY(${delta}px)`;
         }
 
-        // Move the container to its new position simultaneously
         innerEl.style.transform = `translateY(-${scrollOffset}px)`;
 
-        // Step 2: next frame, animate each item back to 0 with staggered delay
         requestAnimationFrame(() => {
             for (let i = 0; i < itemEls.length; i++) {
                 const el = itemEls[i];
@@ -64,49 +87,58 @@
 
     $effect(() => {
         const tracksMatched = JSON.stringify(localTrack) === JSON.stringify(audioPlayer.currentlyPlaying);
-        if (!tracksMatched) {
-            localTrack = audioPlayer.currentlyPlaying;
-            if (audioPlayer.currentlyPlaying) {
-                commands.getLineLyrics(audioPlayer.currentlyPlaying).then((l) => {
-                    const raw = l ?? [];
-                    line_lyrics = raw.map((line, i) => {
-                        const prevStart = raw[i - 1]?.start_time;
-                        const cleaned = {
-                            ...line,
-                            line: line.line.replace(/&quot;/g, '"')
-                                .replace(/&amp;/g, "&")
-                                .replace(/&apos;/g, "'")
-                                .replace(/&lt;/g, "<")
-                                .replace(/&gt;/g, ">")
-                        };
-                        if (prevStart === line.start_time && line.end_time != null) {
-                            return { ...cleaned, start_time: line.end_time };
-                        }
-                        return cleaned;
-                    });
-                    itemEls = new Array(line_lyrics.length).fill(null);
-                    scrollOffset = 0;
-                    if (innerEl) innerEl.style.transform = 'translateY(0)';
-                });
-            
-            } else {
-                line_lyrics = [];
-                itemEls = [];
-            }
+        if (tracksMatched) return;
+
+        localTrack = audioPlayer.currentlyPlaying;
+        lyrics = null;
+        scrollOffset = 0;
+        if (innerEl) innerEl.style.transform = 'translateY(0)';
+
+        if (!audioPlayer.currentlyPlaying) {
+            itemEls = [];
+            return;
         }
+
+        commands.getLyrics(audioPlayer.currentlyPlaying).then((l) => {
+            lyrics = l;
+            const len = l.lyricstype === "Syllable"
+                ? (l.syllable_lyrics?.length ?? 0)
+                : (l.line_lyrics?.length ?? 0);
+            itemEls = new Array(len).fill(null);
+        });
     });
 </script>
 
 <div class="lyricsContainer">
-    <div bind:this={listEl} class="lyricsDisplay">
-        <div bind:this={innerEl} class="lyricsInner">
-            {#each line_lyrics as lyrics, index (`${index}-${lyrics.start_time}`)}
-                <div class="item-wrap" bind:this={itemEls[index]}>
-                    <LineLyric {lyrics} active={index === activeIndex} />
-                </div>
+    {#if !lyrics}
+        <!-- loading / no track, show nothing -->
+    {:else if lyrics.lyricstype === "Syllable" && syllableItems.length > 0}
+        <div bind:this={listEl} class="lyricsDisplay">
+            <div bind:this={innerEl} class="lyricsInner">
+                {#each syllableItems as syllableLine, index (`${index}-${syllableLine.start_time}`)}
+                    <div class="item-wrap" bind:this={itemEls[index]}>
+                        <LyricLine lineLyrics={null} syllableLyrics={syllableLine} active={index === activeIndex} />
+                    </div>
+                {/each}
+            </div>
+        </div>
+    {:else if lyrics.lyricstype === "Unsynced" && lyrics.unsynced}
+        <div class="unsyncedDisplay">
+            {#each lyrics.unsynced.split('\n') as para}
+                <p class="unsyncedLine" class:empty={para.trim() === ''}>{para || '\u00A0'}</p>
             {/each}
         </div>
-    </div>
+    {:else if lyrics.lyricstype === "Line" && lineItems.length > 0}
+        <div bind:this={listEl} class="lyricsDisplay">
+            <div bind:this={innerEl} class="lyricsInner">
+                {#each lineItems as line, index (`${index}-${line.start_time}`)}
+                    <div class="item-wrap" bind:this={itemEls[index]}>
+                        <LyricLine lineLyrics={line} syllableLyrics={null} active={index === activeIndex} />
+                    </div>
+                {/each}
+            </div>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -124,7 +156,7 @@
     .lyricsDisplay {
         padding: 20px;
         flex: 1;
-        overflow: hidden; /* no real scroll - items move themselves */
+        overflow: hidden;
         height: 100%;
         width: 100%;
         position: relative;
@@ -135,12 +167,30 @@
         flex-direction: column;
         align-items: flex-start;
         width: 100%;
-        /* transition on the container itself is instant - string effect is per-item */
     }
 
     .item-wrap {
         display: block;
         width: 100%;
         will-change: transform;
+    }
+
+    .unsyncedDisplay {
+        padding: 24px 20px;
+        overflow-y: auto;
+        height: 100%;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .unsyncedLine {
+        margin: 0;
+        line-height: 1.7;
+        font-size: 1rem;
+        opacity: 0.85;
+    }
+
+    .unsyncedLine.empty {
+        height: 1em;
     }
 </style>

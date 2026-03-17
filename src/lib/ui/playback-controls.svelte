@@ -22,7 +22,7 @@
         {/if}
     </button>
 
-    <button class="playbackControlButton primaryControl" onclick={() => commands.previous()}>
+    <button class="playbackControlButton primaryControl" onclick={() => commands.previous()} class:disabledControl={audioPlayer.history.length === 0}>
         <PoppingButton>
             <PreviousIcon />
         </PoppingButton>
@@ -43,7 +43,7 @@
         {/if}
     </button>
 
-    <button class="playbackControlButton primaryControl" onclick={async () => commands.next()}>
+    <button class="playbackControlButton primaryControl" onclick={async () => commands.next()} class:disabledControl={audioPlayer.queue.length === 0}>
         <PoppingButton>
             <NextIcon />
         </PoppingButton>
@@ -55,6 +55,14 @@
 </div>
 
 <style>
+    .disabledControl {
+        pointer-events: none;
+    }
+
+    .disabledControl :global(i) {
+        color: var(--color-navbar-label);
+    }
+
     .enabledControl :global(i) {
         color: var(--color-accent);
     }

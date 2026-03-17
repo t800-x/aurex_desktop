@@ -4,292 +4,456 @@ use specta::Type;
 
 use crate::models::FullTrack;
 
+// ==================== Data Structures ====================
+
+#[derive(Clone, Serialize, Deserialize, Debug, Type, Default)]
+pub struct Lyrics {
+    pub writers: String,
+    pub unsynced: Option<String>,
+    pub line_lyrics: Option<Vec<LineLyrics>>,
+    pub syllable_lyrics: Option<Vec<SyllableLine>>,
+    pub lyricstype: LyricsType
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, Type)]
+pub enum LyricsType {
+    Line,
+    Syllable,
+    Unsynced
+}
+
+impl Default for LyricsType {
+    fn default() -> Self {
+        Self::Line
+    }
+}
+
+/// One line of line-synced lyrics (line-level TTML or LRC)
+#[derive(Clone, Serialize, Deserialize, Debug, Type)]
+pub struct LineLyrics {
+    pub start_time: f64,
+    pub end_time: Option<f64>,
+    pub real_end_time: Option<f64>,
+    pub line: String,
+    pub speaker: i32,
+}
+
+/// One line in word-timed lyrics (word-level TTML)
+#[derive(Clone, Serialize, Deserialize, Debug, Type)]
+pub struct SyllableLine {
+    pub start_time: f64,
+    pub end_time: f64,
+    pub real_end_time: f64,
+    pub speaker: i32,
+    pub is_background: bool,
+    pub words: Vec<SyllableWord>,
+}
+
+/// A single word/syllable within a SyllableLine
+#[derive(Clone, Serialize, Deserialize, Debug, Type)]
+pub struct SyllableWord {
+    pub start_time: f64,
+    pub end_time: f64,
+    pub text: String,
+}
+
+// ==================== Command ====================
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_lyrics(track: FullTrack) -> Lyrics {
+    let path = &track.track.file_path;
+    let ttml_path = swap_extension(path, "ttml");
+    let lrc_path = swap_extension(path, "lrc");
+
+    // Priority 1 & 2: TTML (word-level beats line-level)
+    if let Ok(content) = fs::read_to_string(&ttml_path) {
+        let writers = extract_writers_ttml(&content);
+        return if content.contains(r#"itunes:timing="Word""#) {
+            let lines = parse_word_ttml(&content);
+            Lyrics {
+                writers,
+                syllable_lyrics: (!lines.is_empty()).then_some(lines),
+                lyricstype: LyricsType::Syllable,
+                ..Default::default()
+            }
+        } else {
+            let lines = parse_line_ttml(&content);
+            Lyrics {
+                writers,
+                line_lyrics: (!lines.is_empty()).then_some(lines),
+                lyricstype: LyricsType::Line,
+                ..Default::default()
+            }
+        };
+    }
+
+    // Priority 3: LRC file
+    if let Ok(content) = fs::read_to_string(&lrc_path) {
+        let (lines, writers) = parse_lrc(&content);
+        if !lines.is_empty() {
+            return Lyrics {
+                writers,
+                line_lyrics: Some(lines),
+                lyricstype: LyricsType::Line,
+                ..Default::default()
+            };
+        }
+    }
+
+    // Priority 4: embedded lyrics tag on the track
+    if let Some(embedded) = &track.track.lyrics {
+        let trimmed = embedded.trim();
+        if !trimmed.is_empty() {
+            if lrc_looks_synced(trimmed) {
+                let (lines, writers) = parse_lrc(trimmed);
+                if !lines.is_empty() {
+                    return Lyrics {
+                        writers,
+                        line_lyrics: Some(lines),
+                        lyricstype: LyricsType::Line,
+                        ..Default::default()
+                    };
+                }
+            }
+            return Lyrics {
+                unsynced: Some(trimmed.to_string()),
+                lyricstype: LyricsType::Unsynced,
+                ..Default::default()
+            };
+        }
+    }
+
+    Lyrics::default()
+}
+
+// ==================== TTML ====================
+
+const TTM_NS: &str = "http://www.w3.org/ns/ttml#metadata";
+
+fn extract_writers_ttml(content: &str) -> String {
+    let Ok(doc) = roxmltree::Document::parse(content) else {
+        return String::new();
+    };
+    doc.descendants()
+        .filter(|n| n.tag_name().name() == "songwriter")
+        .map(|n| collect_text_children(&n).trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn parse_word_ttml(content: &str) -> Vec<SyllableLine> {
+    let Ok(doc) = roxmltree::Document::parse(content) else {
+        eprintln!("failed to parse word-level TTML");
+        return Vec::new();
+    };
+
+    let mut lines = Vec::new();
+
+    for node in doc.descendants() {
+        if node.tag_name().name() != "p" {
+            continue;
+        }
+
+        let start_time = node.attribute("begin").map(parse_time).unwrap_or(0.0);
+        let end_time = node.attribute("end").map(parse_time).unwrap_or(0.0);
+        let speaker = node
+            .attribute((TTM_NS, "agent"))
+            .map(agent_to_speaker)
+            .unwrap_or(0);
+
+        let mut main_words: Vec<SyllableWord> = Vec::new();
+        let mut bg_words: Vec<SyllableWord> = Vec::new();
+
+        for child in node.children() {
+            if child.tag_name().name() != "span" {
+                continue;
+            }
+            if child.attribute((TTM_NS, "role")) == Some("x-bg") {
+                // background vocals: collect the nested spans
+                for bg_span in child.children() {
+                    if bg_span.tag_name().name() == "span" {
+                        if let Some(word) = node_to_word(&bg_span) {
+                            bg_words.push(word);
+                        }
+                    }
+                }
+            } else {
+                if let Some(word) = node_to_word(&child) {
+                    main_words.push(word);
+                }
+            }
+        }
+
+        if !main_words.is_empty() {
+            lines.push(SyllableLine {
+                start_time,
+                end_time,
+                real_end_time: end_time,
+                speaker,
+                is_background: false,
+                words: main_words,
+            });
+        }
+
+        if !bg_words.is_empty() {
+            // use actual word timings for bg lines instead of the parent p bounds
+            let bg_start = bg_words.first().map(|w| w.start_time).unwrap_or(start_time);
+            let bg_end = bg_words.last().map(|w| w.end_time).unwrap_or(end_time);
+            lines.push(SyllableLine {
+                start_time: bg_start,
+                end_time: bg_end,
+                real_end_time: bg_end,
+                speaker,
+                is_background: true,
+                words: bg_words,
+            });
+        }
+    }
+
+    lines
+}
+
+fn parse_line_ttml(content: &str) -> Vec<LineLyrics> {
+    let Ok(doc) = roxmltree::Document::parse(content) else {
+        eprintln!("failed to parse line-level TTML");
+        return Vec::new();
+    };
+
+    let mut lines = Vec::new();
+
+    for node in doc.descendants() {
+        if node.tag_name().name() != "p" {
+            continue;
+        }
+        let Some(begin) = node.attribute("begin") else {
+            continue;
+        };
+
+        let start_time = parse_time(begin);
+        let end_time = node.attribute("end").map(parse_time);
+        let speaker = node
+            .attribute((TTM_NS, "agent"))
+            .map(agent_to_speaker)
+            .unwrap_or(0);
+        let line = collect_element_text(&node);
+
+        if line.is_empty() {
+            continue;
+        }
+
+        lines.push(LineLyrics { start_time, end_time, real_end_time: end_time, line, speaker });
+    }
+
+    lines
+}
+
+fn node_to_word(node: &roxmltree::Node) -> Option<SyllableWord> {
+    let start_time = node.attribute("begin").map(parse_time)?;
+    let end_time = node.attribute("end").map(parse_time)?;
+    let text = collect_text_children(node).to_string();
+    (!text.is_empty()).then_some(SyllableWord { start_time, end_time, text })
+}
+
+/// Collect only direct text node children (handles roxmltree's text() being None on elements)
+fn collect_text_children(node: &roxmltree::Node) -> String {
+    node.children()
+        .filter(|n| n.is_text())
+        .filter_map(|n| n.text())
+        .collect()
+}
+
+/// Recursively collect all text content under an element (for line-level p tags)
+fn collect_element_text(node: &roxmltree::Node) -> String {
+    let mut buf = String::new();
+    for child in node.children() {
+        if child.is_text() {
+            if let Some(t) = child.text() {
+                buf.push_str(t);
+            }
+        } else if child.is_element() {
+            buf.push_str(&collect_element_text(&child));
+        }
+    }
+    buf.trim().to_string()
+}
+
+fn agent_to_speaker(agent: &str) -> i32 {
+    match agent {
+        "v1" => 0,
+        "v2" => 1,
+        "v1000" => 2, // group/ensemble
+        _ => 0,
+    }
+}
+
+/// Handles plain seconds ("11.497"), MM:SS.mmm ("1:16.185"), HH:MM:SS.mmm
+fn parse_time(s: &str) -> f64 {
+    let s = s.trim_matches('"');
+    let parts: Vec<&str> = s.splitn(3, ':').collect();
+    match parts.len() {
+        3 => {
+            let h: f64 = parts[0].parse().unwrap_or(0.0);
+            let m: f64 = parts[1].parse().unwrap_or(0.0);
+            let sec: f64 = parts[2].parse().unwrap_or(0.0);
+            h * 3600.0 + m * 60.0 + sec
+        }
+        2 => {
+            let m: f64 = parts[0].parse().unwrap_or(0.0);
+            let sec: f64 = parts[1].parse().unwrap_or(0.0);
+            m * 60.0 + sec
+        }
+        _ => s.parse().unwrap_or(0.0),
+    }
+}
+
+// ==================== LRC ====================
+
+fn lrc_looks_synced(content: &str) -> bool {
+    content.lines().any(|line| {
+        let line = line.trim();
+        if !line.starts_with('[') {
+            return false;
+        }
+        let Some(close) = line.find(']') else {
+            return false;
+        };
+        let inner = &line[1..close];
+        inner.chars().next().map_or(false, |c| c.is_ascii_digit())
+    })
+}
+
+fn parse_lrc(content: &str) -> (Vec<LineLyrics>, String) {
+    let mut offset_ms: f64 = 0.0;
+    let mut writers = String::new();
+    let mut raw: Vec<(f64, String)> = Vec::new();
+
+    for line in content.lines() {
+        let line = line.trim();
+
+        if let Some((key, val)) = lrc_meta(line) {
+            match key.to_lowercase().as_str() {
+                "offset" => offset_ms = val.trim().parse().unwrap_or(0.0),
+                "au" => writers = val.trim().to_string(),
+                _ => {}
+            }
+            continue;
+        }
+
+        let timestamps = lrc_timestamps(line);
+        if timestamps.is_empty() {
+            continue;
+        }
+
+        let text = strip_word_timestamps(lrc_strip_timestamps(line))
+            .trim()
+            .to_string();
+
+        for ts in timestamps {
+            raw.push((ts, text.clone()));
+        }
+    }
+
+    if raw.is_empty() {
+        return (Vec::new(), writers);
+    }
+
+    raw.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+
+    let offset_sec = offset_ms / 1000.0;
+    let lyrics = raw
+        .iter()
+        .enumerate()
+        .map(|(i, (start, text))| {
+            let start_time = (start + offset_sec).max(0.0);
+            let end_time = raw.get(i + 1).map(|(ns, _)| (ns + offset_sec).max(0.0));
+            LineLyrics { start_time, end_time, real_end_time: end_time, line: text.clone(), speaker: 0 }
+        })
+        .collect();
+
+    (lyrics, writers)
+}
+
+fn lrc_meta(line: &str) -> Option<(String, String)> {
+    if !line.starts_with('[') || line.matches('[').count() > 1 {
+        return None;
+    }
+    let inner = line.strip_prefix('[')?.strip_suffix(']')?;
+    let colon = inner.find(':')?;
+    let key = &inner[..colon];
+    if key.chars().next()?.is_ascii_digit() {
+        return None;
+    }
+    Some((key.to_string(), inner[colon + 1..].to_string()))
+}
+
+fn lrc_timestamps(line: &str) -> Vec<f64> {
+    let mut times = Vec::new();
+    let mut remaining = line;
+    while remaining.starts_with('[') {
+        let Some(close) = remaining.find(']') else { break };
+        let inner = &remaining[1..close];
+        match parse_lrc_timestamp(inner) {
+            Some(t) => {
+                times.push(t);
+                remaining = &remaining[close + 1..];
+            }
+            None => break,
+        }
+    }
+    times
+}
+
+fn lrc_strip_timestamps(line: &str) -> &str {
+    let mut remaining = line;
+    while remaining.starts_with('[') {
+        let Some(close) = remaining.find(']') else { break };
+        if parse_lrc_timestamp(&remaining[1..close]).is_some() {
+            remaining = &remaining[close + 1..];
+        } else {
+            break;
+        }
+    }
+    remaining
+}
+
+fn parse_lrc_timestamp(inner: &str) -> Option<f64> {
+    if !inner.chars().next()?.is_ascii_digit() {
+        return None;
+    }
+    let colon = inner.find(':')?;
+    let minutes: f64 = inner[..colon].parse().ok()?;
+    let seconds: f64 = inner[colon + 1..].parse().ok()?;
+    Some(minutes * 60.0 + seconds)
+}
+
+fn strip_word_timestamps(text: &str) -> String {
+    let mut result = String::new();
+    let mut remaining = text;
+    while let Some(open) = remaining.find('<') {
+        result.push_str(&remaining[..open]);
+        remaining = &remaining[open + 1..];
+        if let Some(close) = remaining.find('>') {
+            let inner = &remaining[..close];
+            if inner.chars().next().map_or(false, |c| c.is_ascii_digit()) {
+                remaining = &remaining[close + 1..];
+            } else {
+                result.push('<');
+            }
+        } else {
+            result.push('<');
+        }
+    }
+    result.push_str(remaining);
+    result
+}
+
+// ==================== Utility ====================
+
 fn swap_extension(path: &str, new_ext: &str) -> String {
     match path.rfind('.') {
         Some(i) => format!("{}.{}", &path[..i], new_ext.trim_start_matches('.')),
         None => format!("{}.{}", path, new_ext.trim_start_matches('.')),
-    }
-}
-
-#[tauri::command]
-#[specta::specta]
-pub async fn get_line_lyrics(track: FullTrack) -> Vec<LineLyrics> {
-    let path = &track.track.file_path;
-    let ttml = swap_extension(path, "ttml");
-    let lrc = swap_extension(path, "lrc");
-
-    if std::path::Path::new(&ttml).exists() {
-        LineLyrics::from_ttml(&ttml)
-    } else {
-        LineLyrics::from_lrc(&lrc)
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug, Type)]
-pub struct LineLyrics {
-    start_time: f64,
-    end_time: Option<f64>,
-    line: String,
-    writers: String,
-}
-
-impl LineLyrics {
-
-    //TTML
-    pub fn from_ttml(filepath: &str) -> Vec<LineLyrics> {
-        if let Ok(content) = fs::read_to_string(filepath) {
-
-            if content.contains("itunes:timing=\"Word\"") {
-                println!("This is a word-level TTML file, not line-level. Aborting.");
-                return Vec::new();
-            }
-
-            let writers = Self::extract_writers(&content);
-
-            let mut lyrics = Vec::new();
-            let lines: Vec<&str> = content.lines().collect();
-
-            for line in lines {
-                let line = line.trim();
-                if line.starts_with("<p ") {
-                    if let Some(lyric) = Self::parse_p_tag(line, &writers) {
-                        lyrics.push(lyric);
-                    }
-                }
-            }
-
-            return lyrics;
-        }
-
-        Vec::new()
-    }
-
-    fn extract_writers(content: &str) -> String {
-        let mut writers = Vec::new();
-        let mut remaining = content;
-
-        while let Some(start) = remaining.find("<songwriter>") {
-            let start = start + "<songwriter>".len();
-            remaining = &remaining[start..];
-            if let Some(end) = remaining.find("</songwriter>") {
-                writers.push(remaining[..end].trim().to_string());
-                remaining = &remaining[end..];
-            }
-        }
-
-        writers.join(", ")
-    }
-
-    fn parse_time(time_str: &str) -> f64 {
-        let time_str = time_str.trim_matches('"');
-        let parts: Vec<&str> = time_str.splitn(3, ':').collect();
-        match parts.len() {
-            3 => {
-                // HH:MM:SS.mmm
-                let hours: f64 = parts[0].parse().unwrap_or(0.0);
-                let minutes: f64 = parts[1].parse().unwrap_or(0.0);
-                let seconds: f64 = parts[2].parse().unwrap_or(0.0);
-                hours * 3600.0 + minutes * 60.0 + seconds
-            }
-            2 => {
-                // MM:SS.xx
-                let minutes: f64 = parts[0].parse().unwrap_or(0.0);
-                let seconds: f64 = parts[1].parse().unwrap_or(0.0);
-                minutes * 60.0 + seconds
-            }
-            _ => time_str.parse().unwrap_or(0.0),
-        }
-    }
-
-    fn parse_p_tag(tag_line: &str, writers: &str) -> Option<LineLyrics> {
-        let begin = Self::extract_attr(tag_line, "begin")?;
-        let end = Self::extract_attr(tag_line, "end");
-
-        let text_start = tag_line.find('>')? + 1;
-        let text_end = tag_line.rfind("</p>")?;
-        let text = &tag_line[text_start..text_end];
-
-        Some(LineLyrics {
-            start_time: Self::parse_time(&begin),
-            end_time: end.map(|e| Self::parse_time(&e)),
-            line: text.trim().to_string(),
-            writers: writers.to_string(),
-        })
-    }
-
-    fn extract_attr(tag: &str, attr: &str) -> Option<String> {
-        let search = format!("{}=\"", attr);
-        let start = tag.find(&search)? + search.len();
-        let end = tag[start..].find('"')? + start;
-        Some(tag[start..end].to_string())
-    }
-
-    //LRC
-    pub fn from_lrc(filepath: &str) -> Vec<LineLyrics> {
-        let content = match fs::read_to_string(filepath) {
-            Ok(c) => c,
-            Err(_) => return Vec::new(),
-        };
-
-        let mut offset_ms: f64 = 0.0;
-        let mut writers = String::new();
-        // collected as (start_time, line_text) before we assign end times
-        let mut raw: Vec<(f64, String)> = Vec::new();
-
-        for line in content.lines() {
-            let line = line.trim();
-
-            // metadata tags: [tag:value]
-            if let Some(meta) = Self::lrc_meta(line) {
-                match meta.0.to_lowercase().as_str() {
-                    "offset" => {
-                        // offset is in milliseconds, positive = shift forward
-                        offset_ms = meta.1.trim().parse::<f64>().unwrap_or(0.0);
-                    }
-                    "au" | "ar" => {
-                        // au = author/lyricist, ar = artist. use au as writers if present
-                        if meta.0.to_lowercase() == "au" {
-                            writers = meta.1.trim().to_string();
-                        }
-                    }
-                    _ => {}
-                }
-                continue;
-            }
-
-            // lyric lines can have multiple time tags: [mm:ss.xx][mm:ss.xx]actual text
-            let timestamps = Self::lrc_timestamps(line);
-            if timestamps.is_empty() {
-                continue;
-            }
-
-            // everything after the last timestamp tag is the lyric text
-            let text = Self::strip_word_timestamps(Self::lrc_strip_timestamps(line)).trim().to_string();
-
-            // skip pure instrumental/blank lines but keep empty string lines
-            // (some lrc files use empty lines to mark gaps, still valid)
-            for ts in timestamps {
-                raw.push((ts, text.clone()));
-            }
-        }
-
-        if raw.is_empty() {
-            return Vec::new();
-        }
-
-        // sort by start time since multiple timestamps per line can be out of order
-        raw.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
-
-        // apply offset (convert ms to seconds)
-        let offset_sec = offset_ms / 1000.0;
-
-        let mut lyrics: Vec<LineLyrics> = Vec::new();
-        for (i, (start, text)) in raw.iter().enumerate() {
-            let start_time = (start + offset_sec).max(0.0);
-            let end_time = raw
-                .get(i + 1)
-                .map(|(next_start, _)| (next_start + offset_sec).max(0.0));
-
-            lyrics.push(LineLyrics {
-                start_time,
-                end_time,
-                line: text.clone(),
-                writers: writers.clone(),
-            });
-        }
-
-        lyrics
-    }
-
-    /// Parses a metadata line like [tag:value], returns None if it looks like a timestamp tag
-    fn lrc_meta(line: &str) -> Option<(String, String)> {
-        if !line.starts_with('[') {
-            return None;
-        }
-        let inner = line.strip_prefix('[')?.strip_suffix(']')?;
-        // timestamp tags are [digits:...], metadata tags have alpha keys
-        let colon = inner.find(':')?;
-        let key = &inner[..colon];
-        // if the key is purely digits it's a timestamp, not metadata
-        if key.chars().next()?.is_ascii_digit() {
-            return None;
-        }
-        // also reject if the line has multiple brackets (lyric line with timestamps)
-        if line.matches('[').count() > 1 {
-            return None;
-        }
-        Some((key.to_string(), inner[colon + 1..].to_string()))
-    }
-
-    /// Extracts all timestamps from a line, returns them in seconds
-    fn lrc_timestamps(line: &str) -> Vec<f64> {
-        let mut times = Vec::new();
-        let mut remaining = line;
-        while remaining.starts_with('[') {
-            let close = match remaining.find(']') {
-                Some(i) => i,
-                None => break,
-            };
-            let inner = &remaining[1..close];
-            if let Some(t) = Self::parse_lrc_timestamp(inner) {
-                times.push(t);
-            } else {
-                break; // not a timestamp, stop
-            }
-            remaining = &remaining[close + 1..];
-        }
-        times
-    }
-
-    /// Strips all leading timestamp tags, returning the lyric text
-    fn lrc_strip_timestamps(line: &str) -> &str {
-        let mut remaining = line;
-        while remaining.starts_with('[') {
-            let close = match remaining.find(']') {
-                Some(i) => i,
-                None => break,
-            };
-            let inner = &remaining[1..close];
-            if Self::parse_lrc_timestamp(inner).is_some() {
-                remaining = &remaining[close + 1..];
-            } else {
-                break;
-            }
-        }
-        remaining
-    }
-
-    /// Parses [mm:ss.xx] or [mm:ss.xxx] or [mm:ss] inner content to seconds
-    fn parse_lrc_timestamp(inner: &str) -> Option<f64> {
-        // must start with a digit
-        if !inner.chars().next()?.is_ascii_digit() {
-            return None;
-        }
-        let colon = inner.find(':')?;
-        let minutes: f64 = inner[..colon].parse().ok()?;
-        let seconds: f64 = inner[colon + 1..].parse().ok()?;
-        Some(minutes * 60.0 + seconds)
-    }
-
-    fn strip_word_timestamps(text: &str) -> String {
-        let mut result = String::new();
-        let mut remaining = text;
-        while let Some(open) = remaining.find('<') {
-            result.push_str(&remaining[..open]);
-            remaining = &remaining[open + 1..];
-            if let Some(close) = remaining.find('>') {
-                let inner = &remaining[..close];
-                // only strip if it looks like a timestamp (digit-first), keep actual < > chars
-                if inner.chars().next().map_or(false, |c| c.is_ascii_digit()) {
-                    remaining = &remaining[close + 1..];
-                } else {
-                    result.push('<');
-                }
-            } else {
-                result.push('<');
-            }
-        }
-        result.push_str(remaining);
-        result
     }
 }

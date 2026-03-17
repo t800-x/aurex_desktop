@@ -17,6 +17,7 @@ class PlayerManager {
     currentlyPlaying = $state<FullTrack | null>(null);
     state = $state<PlayerState>(PlayerState.Empty);
     queue = $state<FullTrack[]>([]);
+    history = $state<FullTrack[]>([]);
     position = $state<number>(0.0);
     shuffle = $state<boolean>(false);
     lyricsLineIndex = $state<number | null>(null);
@@ -32,6 +33,7 @@ class PlayerManager {
             this.state = player.state;
             this.position = player.position;
             this.shuffle = player.shuffle;
+            this.history = player.history;
         }
 
         await listen<AudioPlayer>('player-changed', (event) => {
@@ -63,6 +65,14 @@ class PlayerManager {
 
             if (!areArraysEqual(this.queue ?? [], newQ ?? [])) {
                 this.queue = newQ;
+            }
+        });
+
+        await listen<FullTrack[]> ('history-changed', (event) => {
+            let newHistory = event.payload;
+
+            if (!areArraysEqual(this.history ?? [], newHistory ?? [])) {
+                this.history = newHistory;
             }
         });
     }

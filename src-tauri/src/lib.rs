@@ -71,7 +71,7 @@ pub fn run() {
 
         library_service::fulltrack_from_id,
 
-        lyrics::get_line_lyrics
+        lyrics::get_lyrics
     ]);
 
     #[cfg(debug_assertions)]

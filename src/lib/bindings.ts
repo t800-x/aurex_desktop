@@ -203,8 +203,8 @@ async previous() : Promise<Result<AudioPlayer, string>> {
 async fulltrackFromId(id: number) : Promise<FullTrack | null> {
     return await TAURI_INVOKE("fulltrack_from_id", { id });
 },
-async getLineLyrics(track: FullTrack) : Promise<LineLyrics[]> {
-    return await TAURI_INVOKE("get_line_lyrics", { track });
+async getLyrics(track: FullTrack) : Promise<Lyrics> {
+    return await TAURI_INVOKE("get_lyrics", { track });
 }
 }
 
@@ -223,12 +223,25 @@ export type AppState = { clicks: number }
 export type Artist = { id: bigint | null; name: string; genre: string | null }
 export type AudioPlayer = { currently_playing: FullTrack | null; shuffle: boolean; state: PlayerState; history: FullTrack[]; real_queue: FullTrack[]; queue: FullTrack[]; position: number; looping: LoopType }
 export type FullTrack = { track: Track; artist_name: string; album_title: string; album_art: string | null; playlist_position: bigint | null }
-export type LineLyrics = { start_time: number; end_time: number | null; line: string; writers: string }
+/**
+ * One line of line-synced lyrics (line-level TTML or LRC)
+ */
+export type LineLyrics = { start_time: number; end_time: number | null; real_end_time: number | null; line: string; speaker: number }
 export type LoopType = "LoopOnce" | "LoopOver" | "Off"
+export type Lyrics = { writers: string; unsynced: string | null; line_lyrics: LineLyrics[] | null; syllable_lyrics: SyllableLine[] | null; lyricstype: LyricsType }
+export type LyricsType = "Line" | "Syllable" | "Unsynced"
 export type MatchReason = "Title" | "Artist" | "Album" | "Lyrics"
 export type PlayerState = "Paused" | "Playing" | "Empty" | "Stopped"
 export type Playlist = { id: bigint | null; name: string; cover_path: string | null; created_at: bigint }
 export type SearchResults = { tracks: TrackResult[]; albums: Album[]; artists: Artist[]; playlists: Playlist[] }
+/**
+ * One line in word-timed lyrics (word-level TTML)
+ */
+export type SyllableLine = { start_time: number; end_time: number; real_end_time: number; speaker: number; is_background: boolean; words: SyllableWord[] }
+/**
+ * A single word/syllable within a SyllableLine
+ */
+export type SyllableWord = { start_time: number; end_time: number; text: string }
 export type Track = { id: bigint | null; album_id: bigint; artist_id: bigint; file_path: string; title: string; track_number: bigint; disc_number: bigint; bpm: bigint; duration: bigint; initial_key: string | null; isrc: string | null; lyrics: string | null; composer: string | null }
 export type TrackResult = { track: FullTrack; reasons: MatchReason[] }
 
