@@ -6,10 +6,9 @@
     let lyrics = $state<Lyrics | null>(null);
     let localTrack = $state<FullTrack | null>(null);
 
-    // svelte-ignore non_reactive_update
-    let itemEls: Array<HTMLElement | null> = [];
-    let listEl: HTMLDivElement | null = null;
-    let innerEl: HTMLDivElement | null = null;
+    let itemEls: Array<HTMLElement | null> = $state([]);
+    let listEl: HTMLDivElement | null = $state(null);
+    let innerEl: HTMLDivElement | null = $state(null);
     let scrollOffset = 0;
 
     let lineItems = $derived<LineLyrics[]>(
