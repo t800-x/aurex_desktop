@@ -27,7 +27,10 @@
         !lyrics || lyrics.lyricstype !== "Syllable" || !lyrics.syllable_lyrics
             ? []
             : lyrics.syllable_lyrics.map((line, i) => {
-                if (lyrics!.syllable_lyrics![i - 1]?.start_time === line.start_time) {
+                const prev = lyrics!.syllable_lyrics![i - 1];
+                // Only dedup if BOTH lines are normal vocals -- bg+main pairs from the same <p>
+                // legitimately share a start_time and should not be touched
+                if (prev?.start_time === line.start_time && !line.is_background && !prev.is_background) {
                     return { ...line, start_time: line.end_time };
                 }
                 return line;
@@ -130,20 +133,20 @@
     {:else if lyrics.lyricstype === "Syllable" && syllableItems.length > 0}
         <div bind:this={listEl} class="lyricsDisplay">
             <div bind:this={innerEl} class="lyricsInner">
-                {#if syllableItems[0] && syllableItems[0].start_time > 3}
+                <!-- {#if syllableItems[0] && syllableItems[0].start_time > 3}
                     <LyricGap gapStart={0} gapEnd={syllableItems[0].start_time} />
-                {/if}
+                {/if} -->
                 {#each syllableItems as syllableLine, index (`${index}-${syllableLine.start_time}`)}
                     <div class="item-wrap" bind:this={itemEls[index]}>
                         <LyricLine lineLyrics={null} hasMultipleSpeakers={lyrics?.multiple_speakers} syllableLyrics={syllableLine} active={activeIndices.includes(index)} />
                     </div>
-                    {#if index < syllableItems.length - 1}
+                    <!-- {#if index < syllableItems.length - 1}
                         {@const gapEnd = syllableItems[index + 1].start_time}
                         {@const gapStart = syllableLine.end_time ?? syllableLine.start_time}
                         {#if gapEnd - gapStart > 3}
                             <LyricGap {gapStart} {gapEnd} />
                         {/if}
-                    {/if}
+                    {/if} -->
                 {/each}
             </div>
         </div>
@@ -163,13 +166,13 @@
                     <div class="item-wrap" bind:this={itemEls[index]}>
                         <LyricLine lineLyrics={line} syllableLyrics={null} active={activeIndices.includes(index)} />
                     </div>
-                    {#if index < lineItems.length - 1}
+                    <!-- {#if index < lineItems.length - 1}
                         {@const gapEnd = lineItems[index + 1].start_time}
                         {@const gapStart = line.end_time ?? line.start_time}
                         {#if gapEnd - gapStart > 3}
                             <LyricGap {gapStart} {gapEnd} />
                         {/if}
-                    {/if}
+                    {/if} -->
                 {/each}
             </div>
         </div>

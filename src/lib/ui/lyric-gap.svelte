@@ -44,6 +44,7 @@
         gap: 10px;
         padding: 14px 10px;
         align-items: center;
+        will-change: transform;
     }
 
     .dot {
@@ -57,12 +58,14 @@
 
     /* Standard bounce leading up to and during the gap */
     .gap-dots.bouncing {
-        animation: bounce 1.1s ease-in-out infinite;
+        animation: pulse 2s ease-in-out infinite;
+        animation-delay: var(--delay);
     }
 
     /* Extra bounce right before the gap ends */
     .gap-dots.hurry {
-        animation: bounce-high 0.5s ease-in-out infinite;
+        animation: pulse-high 0.4s ease-in-out infinite;
+        animation-delay: var(--delay);
     }
 
     /* The new opacity-based fill */
@@ -72,7 +75,17 @@
         background: rgba(255, 255, 255, 0.9);
         border-radius: 50%;
         opacity: var(--fill-opacity);
-        transition: opacity 0.08s linear;
+        transition: opacity 0.1s linear;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.6; }
+        50% { transform: scale(1.4); opacity: 1; }
+    }
+
+    @keyframes pulse-high {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.7); }
     }
 
     /* We removed opacity from the keyframes so it doesn't fight with the fill or break on rewind */
