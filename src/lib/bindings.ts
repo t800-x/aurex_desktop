@@ -228,7 +228,7 @@ export type FullTrack = { track: Track; artist_name: string; album_title: string
  */
 export type LineLyrics = { start_time: number; end_time: number | null; real_end_time: number | null; line: string; speaker: number }
 export type LoopType = "LoopOnce" | "LoopOver" | "Off"
-export type Lyrics = { writers: string; unsynced: string | null; line_lyrics: LineLyrics[] | null; syllable_lyrics: SyllableLine[] | null; lyricstype: LyricsType }
+export type Lyrics = { writers: string; unsynced: string | null; line_lyrics: LineLyrics[] | null; syllable_lyrics: SyllableLine[] | null; lyricstype: LyricsType; multiple_speakers: boolean }
 export type LyricsType = "Line" | "Syllable" | "Unsynced"
 export type MatchReason = "Title" | "Artist" | "Album" | "Lyrics"
 export type PlayerState = "Paused" | "Playing" | "Empty" | "Stopped"

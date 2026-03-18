@@ -7,14 +7,14 @@
     let {
         lineLyrics,
         syllableLyrics,
+        hasMultipleSpeakers = false,
         active = false,
     }: {
         lineLyrics: LineLyrics | null;
         syllableLyrics: SyllableLine | null;
         active?: boolean;
+        hasMultipleSpeakers?: boolean;
     } = $props();
-
-    onMount(() => console.log(`syll: ${syllableLyrics !== null}, line: ${lineLyrics !== null}`));
 
     function wordFill(word: SyllableWord, pos: number): number {
         if (pos <= word.start_time) return 0;
@@ -52,6 +52,8 @@
         onclick={() => commands.seek(_.start_time)}
         class:active
         class="tile"
+        class:leftSpeaker={hasMultipleSpeakers && (syllableLyrics.speaker === 0)}
+        class:rightSpeaker={hasMultipleSpeakers && (syllableLyrics.speaker === 1)}
     >
         {#each _.words as word}
             {@const fill = active ? wordFill(word, audioPlayer.position) : 0}
@@ -78,7 +80,7 @@
 <style>
     .tile {
         padding: 10px;
-        font-size: 0; /* kills inline-block gaps */
+        font-size: 0; 
         font-weight: 700;
         text-align: left;
         width: 100%;
@@ -96,6 +98,29 @@
         transform: scale(0.9);
         filter: none;
         transition: transform 0.15s ease-out;
+    }
+
+    .leftSpeaker {
+        width: fit-content;
+        max-width: 90%;
+        margin-right: 10%;
+    }
+
+    .rightSpeaker {
+        width: fit-content;
+        max-width: 90%;
+        margin-left: auto;
+        margin-right: 0;
+        text-align: right;
+        transform-origin: right center;
+    }
+
+    .backgroundVocals {
+
+    }
+
+    .backgroundVocalsActive {
+
     }
 
     .lineTile {

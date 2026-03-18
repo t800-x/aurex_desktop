@@ -2,6 +2,7 @@
     import { commands, type FullTrack, type Lyrics, type LineLyrics, type SyllableLine } from "$lib/bindings";
     import { audioPlayer } from "$lib/player.svelte";
     import LyricLine from "./lyric-line.svelte";
+    import LyricGap from "./lyric-gap.svelte";
 
     let lyrics = $state<Lyrics | null>(null);
     let localTrack = $state<FullTrack | null>(null);
@@ -33,23 +34,38 @@
             })
     );
 
-    let activeIndex = $derived(
+    let activeIndices = $derived(
         (() => {
             const items = lyrics?.lyricstype === "Syllable" ? syllableItems : lineItems;
-            return items.reduce<number>((acc, line, i) => {
-                const effectiveEnd = items[i + 1]?.start_time ?? line.end_time ?? Infinity;
+            return items.reduce<number[]>((acc, line, i) => {
+                const nextStart = items[i + 1]?.start_time;
+                
+                let effectiveEnd;
+                if (nextStart !== undefined) {
+                    // If there's a next line, extend over the gap (nextStart) 
+                    // OR keep alive during the overlap (line.end_time).
+                    effectiveEnd = line.end_time != null 
+                        ? Math.max(line.end_time, nextStart) 
+                        : nextStart;
+                } else {
+                    // Fallback for the very last line of the song
+                    effectiveEnd = line.end_time ?? Infinity;
+                }
+                
                 if (audioPlayer.position >= line.start_time && audioPlayer.position < effectiveEnd) {
-                    return i;
+                    acc.push(i);
                 }
                 return acc;
-            }, -1);
+            }, []);
         })()
     );
 
-    let prevActiveIndex = $state(-1);
+    let scrollTargetIndex = $derived(activeIndices[0] ?? -1);
+
+    let prevScrollTarget = $state(-1);
 
     function updateScroll() {
-        const activeEl = itemEls[activeIndex];
+        const activeEl = itemEls[scrollTargetIndex];
         if (!activeEl || !listEl || !innerEl) return;
 
         const containerHeight = listEl.getBoundingClientRect().height;
@@ -70,7 +86,7 @@
             for (let i = 0; i < itemEls.length; i++) {
                 const el = itemEls[i];
                 if (!el) continue;
-                const delay = Math.abs(i - activeIndex) * 30;
+                const delay = Math.abs(i - scrollTargetIndex) * 30;
                 el.style.transition = `transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}ms`;
                 el.style.transform = 'translateY(0)';
             }
@@ -78,9 +94,9 @@
     }
 
     $effect(() => {
-        if (activeIndex !== prevActiveIndex) {
-            prevActiveIndex = activeIndex;
-            if (activeIndex !== -1) updateScroll();
+        if (scrollTargetIndex !== prevScrollTarget) {
+            prevScrollTarget = scrollTargetIndex;
+            if (scrollTargetIndex !== -1) updateScroll();
         }
     });
 
@@ -114,10 +130,20 @@
     {:else if lyrics.lyricstype === "Syllable" && syllableItems.length > 0}
         <div bind:this={listEl} class="lyricsDisplay">
             <div bind:this={innerEl} class="lyricsInner">
+                {#if syllableItems[0] && syllableItems[0].start_time > 3}
+                    <LyricGap gapStart={0} gapEnd={syllableItems[0].start_time} />
+                {/if}
                 {#each syllableItems as syllableLine, index (`${index}-${syllableLine.start_time}`)}
                     <div class="item-wrap" bind:this={itemEls[index]}>
-                        <LyricLine lineLyrics={null} syllableLyrics={syllableLine} active={index === activeIndex} />
+                        <LyricLine lineLyrics={null} hasMultipleSpeakers={lyrics?.multiple_speakers} syllableLyrics={syllableLine} active={activeIndices.includes(index)} />
                     </div>
+                    {#if index < syllableItems.length - 1}
+                        {@const gapEnd = syllableItems[index + 1].start_time}
+                        {@const gapStart = syllableLine.end_time ?? syllableLine.start_time}
+                        {#if gapEnd - gapStart > 3}
+                            <LyricGap {gapStart} {gapEnd} />
+                        {/if}
+                    {/if}
                 {/each}
             </div>
         </div>
@@ -130,10 +156,20 @@
     {:else if lyrics.lyricstype === "Line" && lineItems.length > 0}
         <div bind:this={listEl} class="lyricsDisplay">
             <div bind:this={innerEl} class="lyricsInner">
+                {#if lineItems[0] && lineItems[0].start_time > 3}
+                    <LyricGap gapStart={0} gapEnd={lineItems[0].start_time} />
+                {/if}
                 {#each lineItems as line, index (`${index}-${line.start_time}`)}
                     <div class="item-wrap" bind:this={itemEls[index]}>
-                        <LyricLine lineLyrics={line} syllableLyrics={null} active={index === activeIndex} />
+                        <LyricLine lineLyrics={line} syllableLyrics={null} active={activeIndices.includes(index)} />
                     </div>
+                    {#if index < lineItems.length - 1}
+                        {@const gapEnd = lineItems[index + 1].start_time}
+                        {@const gapStart = line.end_time ?? line.start_time}
+                        {#if gapEnd - gapStart > 3}
+                            <LyricGap {gapStart} {gapEnd} />
+                        {/if}
+                    {/if}
                 {/each}
             </div>
         </div>

@@ -12,7 +12,8 @@ pub struct Lyrics {
     pub unsynced: Option<String>,
     pub line_lyrics: Option<Vec<LineLyrics>>,
     pub syllable_lyrics: Option<Vec<SyllableLine>>,
-    pub lyricstype: LyricsType
+    pub lyricstype: LyricsType,
+    pub multiple_speakers: bool
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, Type)]
@@ -71,9 +72,11 @@ pub async fn get_lyrics(track: FullTrack) -> Lyrics {
         let writers = extract_writers_ttml(&content);
         return if content.contains(r#"itunes:timing="Word""#) {
             let lines = parse_word_ttml(&content);
+            let syllable_lyrics = (!lines.is_empty()).then_some(lines);
             Lyrics {
+                multiple_speakers: check_multiple_speakers(&syllable_lyrics),
                 writers,
-                syllable_lyrics: (!lines.is_empty()).then_some(lines),
+                syllable_lyrics: syllable_lyrics,
                 lyricstype: LyricsType::Syllable,
                 ..Default::default()
             }
@@ -174,7 +177,8 @@ fn parse_word_ttml(content: &str) -> Vec<SyllableLine> {
                 // background vocals: collect the nested spans
                 for bg_span in child.children() {
                     if bg_span.tag_name().name() == "span" {
-                        if let Some(word) = node_to_word(&bg_span) {
+                        if let Some(mut word) = node_to_word(&bg_span) {
+                            word.text.push(' ');
                             bg_words.push(word);
                         }
                     }
@@ -213,6 +217,19 @@ fn parse_word_ttml(content: &str) -> Vec<SyllableLine> {
     }
 
     lines
+}
+
+fn check_multiple_speakers(syllable_lines: &Option<Vec<SyllableLine>>) -> bool {
+
+    if let Some(lines) = syllable_lines.clone() {
+        for line in lines {
+            if (line.speaker == 1) || (line.speaker == 2) {
+                return true;
+            }
+        }
+    }
+
+    false
 }
 
 fn parse_line_ttml(content: &str) -> Vec<LineLyrics> {
