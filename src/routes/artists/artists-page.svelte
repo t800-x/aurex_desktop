@@ -7,6 +7,7 @@
     import PersonIcon from "$lib/icons/person-icon.svelte";
     import ArtistView from "./artist-view.svelte";
     import { router, Section } from "$lib/router.svelte";
+    import { listen } from "@tauri-apps/api/event";
 
     const section = Section.artists;
     let hidden = $derived(router.current !== section);
@@ -23,6 +24,12 @@
         artists = await commands.getAllArtists();
         selected = Number(artists[0]?.id ?? null);
         proxy = [...artists];
+
+        await listen<void>('indexing-done', async (event) => {
+            artists = await commands.getAllArtists();
+            selected = Number(artists[0]?.id ?? null);
+            proxy = [...artists];
+        });
     });
 
     // Consume a pending artist navigation request from the router

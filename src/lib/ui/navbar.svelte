@@ -15,6 +15,7 @@
     import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
     import PlaylistContextMenu from "./playlist-context-menu.svelte";
     import RecentlyAddedIcon from "$lib/icons/recently-added-icon.svelte";
+    import { event } from "@tauri-apps/api";
 
     const width = 268;
 
@@ -25,7 +26,11 @@
         playlists = await commands.getAllPlaylists();
         await listen<void>('playlists-changed', async (event) => {
             playlists = await commands.getAllPlaylists();
-        })
+        });
+
+        await listen<void>('indexing-done', async (event) => {
+            playlists = await commands.getAllPlaylists();
+        });
     });
 
     // Menu items.

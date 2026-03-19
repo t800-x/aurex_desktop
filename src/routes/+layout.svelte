@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import "../colors.css";
-  import '@fontsource-variable/inter';
+  import "@fontsource-variable/inter";
   import Navbar from "$lib/ui/navbar.svelte";
   import SongsPage from "./songs/songs-page.svelte";
   import AlbumsPage from "./albums/albums-page.svelte";
@@ -13,17 +13,23 @@
   import { router } from "$lib/router.svelte";
   import CreatePlaylistDialog from "$lib/ui/create-playlist-dialog.svelte";
   import DeletePlaylistDialog from "$lib/ui/delete-playlist-dialog.svelte";
-    import RecentlyAddedPage from "./recently-added/recently-added-page.svelte";
+  import RecentlyAddedPage from "./recently-added/recently-added-page.svelte";
+    import { onMount } from "svelte";
+    import { commands } from "$lib/bindings";
 
-  let blocked = $derived(router.rightPaneContent !== null && router.rightPaneOverlaying);
+  let blocked = $derived(
+    router.rightPaneContent !== null && router.rightPaneOverlaying,
+  );
+
+  onMount(() => commands.index());
 </script>
 
 <div class="appRoot dark">
   <Navbar />
   <div class="contentWrapper">
-    <main class="mainContent" class:blocked={blocked}>
+    <main class="mainContent" class:blocked>
       <RecentlyAddedPage />
-      <SongsPage /> 
+      <SongsPage />
       <AlbumsPage />
       <ArtistsPage />
       <SearchPage />
@@ -31,7 +37,7 @@
       <PlaylistPage />
     </main>
 
-    <RightPane/>
+    <RightPane />
   </div>
 
   <CreatePlaylistDialog />
@@ -72,6 +78,6 @@
   }
 
   :global(body) {
-    font-family: 'Inter Variable', sans-serif;
+    font-family: "Inter Variable", sans-serif;
   }
 </style>

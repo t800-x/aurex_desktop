@@ -8,6 +8,7 @@
     import { getContext } from "svelte";
     import type { StackContext } from "$lib/ui/stack-view.svelte";
     import { router } from "$lib/router.svelte";
+    import { listen } from "@tauri-apps/api/event";
 
     const { push, pop, canPop } = getContext<StackContext>('stack');
 
@@ -17,6 +18,11 @@
     onMount(async () => {
         albums = await commands.getAllAlbums();
         proxy = [...albums];
+
+        await listen<void>('indexing-done', async (event) => {
+            albums = await commands.getAllAlbums();
+            proxy = [...albums];
+        });
     });
 
     // Consume a pending album navigation request from the router

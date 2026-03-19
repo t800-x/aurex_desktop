@@ -14,7 +14,7 @@ export enum RightPaneContent {
 }
 
 class Router {
-    current = $state<Section>(Section.songs);
+    current = $state<Section>(Section.recentlyAdded);
     rightPaneContent = $state<RightPaneContent | null>(null);
     rightPaneOverlaying = $state(false);
 

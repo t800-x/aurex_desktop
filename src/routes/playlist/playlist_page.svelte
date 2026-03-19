@@ -62,6 +62,13 @@
                 }
             }
         });
+
+        await listen<void>('indexing-done', async (event) => {
+            if (isP_id) {
+                playlist = await commands.getPlaylist(playlist_id);
+                tracks = await commands.getPlaylistTracks(playlist_id); 
+            }
+        });
     });
 </script>
 

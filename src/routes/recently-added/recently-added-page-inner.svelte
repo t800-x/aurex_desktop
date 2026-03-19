@@ -7,6 +7,7 @@
     import AlbumView from "../albums/album-view.svelte";
     import { getContext } from "svelte";
     import type { StackContext } from "$lib/ui/stack-view.svelte";
+    import { listen } from "@tauri-apps/api/event";
 
     const { push, pop, canPop } = getContext<StackContext>('stack');
 
@@ -16,6 +17,11 @@
     onMount(async () => {
         albums = await commands.getRecentlyAdded();
         proxy = [...albums];
+
+        await listen<void>('indexing-done', async (event) => {
+            albums = await commands.getRecentlyAdded();
+            proxy = [...albums];
+        });
     });
 
     async function onFilterTermChanged(term: string) {

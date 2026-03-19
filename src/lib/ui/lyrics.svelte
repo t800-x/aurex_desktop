@@ -159,9 +159,9 @@
     {:else if lyrics.lyricstype === "Line" && lineItems.length > 0}
         <div bind:this={listEl} class="lyricsDisplay">
             <div bind:this={innerEl} class="lyricsInner">
-                {#if lineItems[0] && lineItems[0].start_time > 3}
+                <!-- {#if lineItems[0] && lineItems[0].start_time > 3}
                     <LyricGap gapStart={0} gapEnd={lineItems[0].start_time} />
-                {/if}
+                {/if} -->
                 {#each lineItems as line, index (`${index}-${line.start_time}`)}
                     <div class="item-wrap" bind:this={itemEls[index]}>
                         <LyricLine lineLyrics={line} syllableLyrics={null} active={activeIndices.includes(index)} />
