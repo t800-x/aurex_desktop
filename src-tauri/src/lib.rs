@@ -51,6 +51,7 @@ pub fn run() {
         media_lib_cmd::add_to_playlist,
         media_lib_cmd::remove_from_playlist,
         media_lib_cmd::get_pl_id_by_name,
+        media_lib_cmd::get_recently_added,
 
         audio_player::get_player,
         audio_player::play,

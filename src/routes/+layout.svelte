@@ -13,6 +13,7 @@
   import { router } from "$lib/router.svelte";
   import CreatePlaylistDialog from "$lib/ui/create-playlist-dialog.svelte";
   import DeletePlaylistDialog from "$lib/ui/delete-playlist-dialog.svelte";
+    import RecentlyAddedPage from "./recently-added/recently-added-page.svelte";
 
   let blocked = $derived(router.rightPaneContent !== null && router.rightPaneOverlaying);
 </script>
@@ -21,6 +22,7 @@
   <Navbar />
   <div class="contentWrapper">
     <main class="mainContent" class:blocked={blocked}>
+      <RecentlyAddedPage />
       <SongsPage /> 
       <AlbumsPage />
       <ArtistsPage />

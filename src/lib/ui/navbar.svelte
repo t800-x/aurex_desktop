@@ -14,6 +14,7 @@
     import { listen } from "@tauri-apps/api/event";
     import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
     import PlaylistContextMenu from "./playlist-context-menu.svelte";
+    import RecentlyAddedIcon from "$lib/icons/recently-added-icon.svelte";
 
     const width = 268;
 
@@ -29,6 +30,11 @@
 
     // Menu items.
     const items = [
+        {
+            title: "Recently Added",
+            section: Section.recentlyAdded,
+            icon: RecentlyAddedIcon
+        },
         {
             title: "Songs",
             section: Section.songs,
@@ -54,7 +60,11 @@
 
     <NavbarLabel text={'Library'} />
     {#each items as item}
-        <NavbarItem Icon={item.icon} section={item.section} text={item.title}/>
+        {#if item.section === Section.recentlyAdded}
+            <NavbarItem Icon={item.icon} section={item.section} text={item.title} iconSize={22}/>
+        {:else}
+            <NavbarItem Icon={item.icon} section={item.section} text={item.title}/>
+        {/if}
     {/each}
 
     <div style="height: 20px"></div>

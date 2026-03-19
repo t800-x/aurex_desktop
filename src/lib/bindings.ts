@@ -77,6 +77,9 @@ async removeFromPlaylist(trackId: number, position: number, playlistId: number) 
 async getPlIdByName(name: string) : Promise<number | null> {
     return await TAURI_INVOKE("get_pl_id_by_name", { name });
 },
+async getRecentlyAdded() : Promise<Album[]> {
+    return await TAURI_INVOKE("get_recently_added");
+},
 async getPlayer() : Promise<Result<AudioPlayer, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_player") };
@@ -242,7 +245,7 @@ export type SyllableLine = { start_time: number; end_time: number; real_end_time
  * A single word/syllable within a SyllableLine
  */
 export type SyllableWord = { start_time: number; end_time: number; text: string }
-export type Track = { id: bigint | null; album_id: bigint; artist_id: bigint; file_path: string; title: string; track_number: bigint; disc_number: bigint; bpm: bigint; duration: bigint; initial_key: string | null; isrc: string | null; lyrics: string | null; composer: string | null }
+export type Track = { id: bigint | null; album_id: bigint; artist_id: bigint; file_path: string; title: string; track_number: bigint; disc_number: bigint; bpm: bigint; duration: bigint; initial_key: string | null; isrc: string | null; lyrics: string | null; composer: string | null; added_at: bigint | null }
 export type TrackResult = { track: FullTrack; reasons: MatchReason[] }
 
 /** tauri-specta globals **/

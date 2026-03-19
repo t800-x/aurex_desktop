@@ -5,6 +5,19 @@ use crate::{library_service::library_service, models::{Album, Artist, FullTrack,
 
 #[tauri::command]
 #[specta::specta]
+pub async fn get_recently_added() -> Vec<Album> {
+
+    if let Ok(library) = library_service().lock() {
+        if let Ok(recently_added) = library.get_recently_added_albums() {
+            return recently_added;
+        }
+    }
+
+    Vec::new()
+}
+
+#[tauri::command]
+#[specta::specta]
 pub async fn get_pl_id_by_name(name: String) -> Option<i32> {
     if let Ok(library) = library_service().lock() {
         if let Ok(result) = library.get_playlist_id_by_name(name.as_str()) {

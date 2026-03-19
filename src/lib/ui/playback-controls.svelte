@@ -16,7 +16,7 @@
 
 <div class="playbackControls">
     <button class="playbackControlButton secondaryControl shuffleBtn" class:enabledControl={audioPlayer.shuffle} onclick={() => commands.shuffle()}>
-        <ShuffleIcon size={18} />
+        <ShuffleIcon size={18.5} />
         {#if audioPlayer.shuffle}
             <span class="shuffleDot" transition:scale></span>
         {/if}
@@ -50,7 +50,7 @@
     </button>
 
     <button class="playbackControlButton secondaryControl">
-        <LoopIcon size={18}/>
+        <LoopIcon size={18.5}/>
     </button>
 </div>
 

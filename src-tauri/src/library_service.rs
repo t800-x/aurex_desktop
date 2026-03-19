@@ -132,6 +132,7 @@ impl LibraryService {
                 isrc            TEXT,
                 lyrics          TEXT,
                 composer        TEXT,
+                added_at        INTEGER,
                 FOREIGN KEY (album_id)  REFERENCES albums  (id) ON DELETE CASCADE,
                 FOREIGN KEY (artist_id) REFERENCES artists (id) ON DELETE CASCADE
             );
@@ -152,6 +153,11 @@ impl LibraryService {
             );
         ",
         )?;
+
+        // Idempotent column migration for existing databases -- silently fails
+        // if the column is already there, which is exactly what we want.
+        let _ = conn.execute_batch("ALTER TABLE tracks ADD COLUMN added_at INTEGER;");
+
         Ok(())
     }
 
@@ -203,13 +209,20 @@ impl LibraryService {
             album_art,
         )?;
 
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0);
+
         // 4. Insert (or replace) track.
+        // Note: added_at is intentionally excluded from the DO UPDATE so a
+        // re-scan never clobbers the original "date added" timestamp.
         conn.execute(
             "INSERT INTO tracks (
                 album_id, artist_id, file_path, title,
                 track_number, disc_number, bpm, duration,
-                initial_key, isrc, lyrics, composer
-             ) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)
+                initial_key, isrc, lyrics, composer, added_at
+             ) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)
              ON CONFLICT(file_path) DO UPDATE SET
                 album_id     = excluded.album_id,
                 artist_id    = excluded.artist_id,
@@ -235,6 +248,7 @@ impl LibraryService {
                 isrc,
                 lyrics,
                 composer,
+                now,
             ],
         )?;
 
@@ -267,6 +281,19 @@ impl LibraryService {
     // -----------------------------------------------------------------------
     // Queries — Albums
     // -----------------------------------------------------------------------
+
+    pub fn get_recently_added_albums(&self) -> Result<Vec<Album>> {
+        let conn = self.lock();
+        let mut stmt = conn.prepare(
+            "SELECT a.*, MAX(t.added_at) AS latest_added_at
+             FROM albums a
+             JOIN tracks t ON t.album_id = a.id
+             GROUP BY a.id
+             ORDER BY latest_added_at DESC",
+        )?;
+        let rows = stmt.query_map([], Album::from_row)?;
+        rows.map(|r| r.map_err(Into::into)).collect()
+    }
 
     pub fn get_all_albums(&self) -> Result<Vec<Album>> {
         let conn = self.lock();

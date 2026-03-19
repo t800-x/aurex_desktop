@@ -97,6 +97,7 @@ pub struct Track {
     pub isrc: Option<String>,
     pub lyrics: Option<String>,
     pub composer: Option<String>,
+    pub added_at: Option<i64>, // Unix ms timestamp; None for tracks added before this field existed
 }
 
 impl Track {
@@ -117,6 +118,7 @@ impl Track {
             isrc: row.get("isrc")?,
             lyrics: row.get("lyrics")?,
             composer: row.get("composer")?,
+            added_at: row.get("added_at")?,
         })
     }
 

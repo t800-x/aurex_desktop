@@ -4,7 +4,8 @@ export enum Section {
     search = 1,
     songs,
     albums,
-    artists
+    artists,
+    recentlyAdded
 }
 
 export enum RightPaneContent {
