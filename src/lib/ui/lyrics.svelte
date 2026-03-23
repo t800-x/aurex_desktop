@@ -12,6 +12,11 @@
     let innerEl: HTMLDivElement | null = $state(null);
     let scrollOffset = 0;
 
+    // isUserScrolling stays true through the entire snap-back animation so that
+    // line-change effects don't fire updateScroll mid-pan and fight the transition.
+    let isUserScrolling = $state(false);
+    let userScrollTimeout: ReturnType<typeof setTimeout> | null = null;
+
     let lineItems = $derived<LineLyrics[]>(
         !lyrics || lyrics.lyricstype !== "Line" || !lyrics.line_lyrics
             ? []
@@ -28,8 +33,6 @@
             ? []
             : lyrics.syllable_lyrics.map((line, i) => {
                 const prev = lyrics!.syllable_lyrics![i - 1];
-                // Only dedup if BOTH lines are normal vocals -- bg+main pairs from the same <p>
-                // legitimately share a start_time and should not be touched
                 if (prev?.start_time === line.start_time && !line.is_background && !prev.is_background) {
                     return { ...line, start_time: line.end_time };
                 }
@@ -42,19 +45,14 @@
             const items = lyrics?.lyricstype === "Syllable" ? syllableItems : lineItems;
             return items.reduce<number[]>((acc, line, i) => {
                 const nextStart = items[i + 1]?.start_time;
-                
                 let effectiveEnd;
                 if (nextStart !== undefined) {
-                    // If there's a next line, extend over the gap (nextStart) 
-                    // OR keep alive during the overlap (line.end_time).
-                    effectiveEnd = line.end_time != null 
-                        ? Math.max(line.end_time, nextStart) 
+                    effectiveEnd = line.end_time != null
+                        ? Math.max(line.end_time, nextStart)
                         : nextStart;
                 } else {
-                    // Fallback for the very last line of the song
                     effectiveEnd = line.end_time ?? Infinity;
                 }
-                
                 if (audioPlayer.position >= line.start_time && audioPlayer.position < effectiveEnd) {
                     acc.push(i);
                 }
@@ -64,8 +62,15 @@
     );
 
     let scrollTargetIndex = $derived(activeIndices[0] ?? -1);
-
     let prevScrollTarget = $state(-1);
+
+    function clearItemTransforms() {
+        for (const el of itemEls) {
+            if (!el) continue;
+            el.style.transition = 'none';
+            el.style.transform = 'translateY(0)';
+        }
+    }
 
     function updateScroll() {
         const activeEl = itemEls[scrollTargetIndex];
@@ -83,6 +88,10 @@
             el.style.transform = `translateY(${delta}px)`;
         }
 
+        // Always clear any lingering transition from snap-back before moving innerEl,
+        // otherwise the first post-snap updateScroll animates with the 0.65s curve
+        // instead of being instant (which breaks the stagger illusion).
+        innerEl.style.transition = '';
         innerEl.style.transform = `translateY(-${scrollOffset}px)`;
 
         requestAnimationFrame(() => {
@@ -96,7 +105,75 @@
         });
     }
 
+    /**
+     * Smoothly returns to the active lyric line after the user-scroll cooldown.
+     * Keeps isUserScrolling=true through the entire pan so that in-flight line
+     * changes don't call updateScroll and fight the animation.
+     * Only releases control (isUserScrolling=false, prevScrollTarget=-1) once
+     * the transition has landed -- or immediately if the line is already visible.
+     */
+    function snapBackToActive() {
+        if (scrollTargetIndex === -1 || !listEl || !innerEl) {
+            isUserScrolling = false;
+            prevScrollTarget = -1;
+            return;
+        }
+
+        const activeEl = itemEls[scrollTargetIndex];
+        if (!activeEl) {
+            isUserScrolling = false;
+            prevScrollTarget = -1;
+            return;
+        }
+
+        const containerHeight = listEl.getBoundingClientRect().height;
+        const elVisibleTop = activeEl.offsetTop - scrollOffset;
+        const isOutOfView = elVisibleTop < 0 || elVisibleTop > containerHeight * 0.75;
+
+        const targetOffset = Math.max(0, activeEl.offsetTop - containerHeight * 0.1);
+
+        clearItemTransforms();
+        scrollOffset = targetOffset;
+
+        if (isOutOfView) {
+            innerEl.style.transition = 'transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            innerEl.style.transform = `translateY(-${scrollOffset}px)`;
+
+            // Release AFTER the pan lands, not before -- keeps updateScroll from
+            // firing mid-transition and leaving innerEl.style.transition dirty.
+            innerEl.addEventListener('transitionend', () => {
+                if (!innerEl) return;
+                innerEl.style.transition = '';
+                isUserScrolling = false;
+                prevScrollTarget = -1; // $state write -> re-triggers the $effect
+            }, { once: true });
+        } else {
+            innerEl.style.transition = '';
+            innerEl.style.transform = `translateY(-${scrollOffset}px)`;
+            isUserScrolling = false;
+            prevScrollTarget = -1;
+        }
+    }
+
+    function handleWheel(e: WheelEvent) {
+        e.preventDefault();
+        if (!listEl || !innerEl) return;
+
+        clearItemTransforms();
+
+        const maxScroll = Math.max(0, innerEl.offsetHeight - listEl.clientHeight);
+        scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset + e.deltaY));
+        innerEl.style.transition = 'none';
+        innerEl.style.transform = `translateY(-${scrollOffset}px)`;
+
+        isUserScrolling = true;
+        if (userScrollTimeout) clearTimeout(userScrollTimeout);
+        // snapBackToActive owns the isUserScrolling=false release from here on.
+        userScrollTimeout = setTimeout(snapBackToActive, 2000);
+    }
+
     $effect(() => {
+        if (isUserScrolling) return;
         if (scrollTargetIndex !== prevScrollTarget) {
             prevScrollTarget = scrollTargetIndex;
             if (scrollTargetIndex !== -1) updateScroll();
@@ -110,7 +187,9 @@
         localTrack = audioPlayer.currentlyPlaying;
         lyrics = null;
         scrollOffset = 0;
-        if (innerEl) innerEl.style.transform = 'translateY(0)';
+        isUserScrolling = false;
+        if (userScrollTimeout) { clearTimeout(userScrollTimeout); userScrollTimeout = null; }
+        if (innerEl) { innerEl.style.transition = ''; innerEl.style.transform = 'translateY(0)'; }
 
         if (!audioPlayer.currentlyPlaying) {
             itemEls = [];
@@ -131,22 +210,12 @@
     {#if !lyrics}
         <!-- loading / no track, show nothing -->
     {:else if lyrics.lyricstype === "Syllable" && syllableItems.length > 0}
-        <div bind:this={listEl} class="lyricsDisplay">
+        <div bind:this={listEl} class="lyricsDisplay" onwheel={handleWheel}>
             <div bind:this={innerEl} class="lyricsInner">
-                <!-- {#if syllableItems[0] && syllableItems[0].start_time > 3}
-                    <LyricGap gapStart={0} gapEnd={syllableItems[0].start_time} />
-                {/if} -->
                 {#each syllableItems as syllableLine, index (`${index}-${syllableLine.start_time}`)}
                     <div class="item-wrap" bind:this={itemEls[index]}>
                         <LyricLine lineLyrics={null} hasMultipleSpeakers={lyrics?.multiple_speakers} syllableLyrics={syllableLine} active={activeIndices.includes(index)} />
                     </div>
-                    <!-- {#if index < syllableItems.length - 1}
-                        {@const gapEnd = syllableItems[index + 1].start_time}
-                        {@const gapStart = syllableLine.end_time ?? syllableLine.start_time}
-                        {#if gapEnd - gapStart > 3}
-                            <LyricGap {gapStart} {gapEnd} />
-                        {/if}
-                    {/if} -->
                 {/each}
             </div>
         </div>
@@ -157,22 +226,12 @@
             {/each}
         </div>
     {:else if lyrics.lyricstype === "Line" && lineItems.length > 0}
-        <div bind:this={listEl} class="lyricsDisplay">
+        <div bind:this={listEl} class="lyricsDisplay" onwheel={handleWheel}>
             <div bind:this={innerEl} class="lyricsInner">
-                <!-- {#if lineItems[0] && lineItems[0].start_time > 3}
-                    <LyricGap gapStart={0} gapEnd={lineItems[0].start_time} />
-                {/if} -->
                 {#each lineItems as line, index (`${index}-${line.start_time}`)}
                     <div class="item-wrap" bind:this={itemEls[index]}>
                         <LyricLine lineLyrics={line} syllableLyrics={null} active={activeIndices.includes(index)} />
                     </div>
-                    <!-- {#if index < lineItems.length - 1}
-                        {@const gapEnd = lineItems[index + 1].start_time}
-                        {@const gapStart = line.end_time ?? line.start_time}
-                        {#if gapEnd - gapStart > 3}
-                            <LyricGap {gapStart} {gapEnd} />
-                        {/if}
-                    {/if} -->
                 {/each}
             </div>
         </div>

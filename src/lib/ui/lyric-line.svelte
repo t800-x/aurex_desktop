@@ -241,4 +241,15 @@
     .backgroundVocalsWord.active-word::after {
         opacity: 1;
     }
-</style>
+
+    .word, .backgroundVocalsWord {
+        vertical-align: top;
+    }
+
+    .word::after,
+    .backgroundVocalsWord::after {
+        will-change: mask-image;
+        transform: translateZ(0);
+        filter: none;
+    }
+    </style>

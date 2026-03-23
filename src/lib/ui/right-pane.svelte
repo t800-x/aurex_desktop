@@ -59,7 +59,7 @@
     border-left: 1px solid rgba(255, 255, 255, 0.08);
     transition: width 0.3s ease;
     flex-shrink: 0;
-    backdrop-filter: blur(18px);
+    backdrop-filter: var(--blur-vibrance);
     box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
   }
   .rightPane.open {

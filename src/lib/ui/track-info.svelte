@@ -23,11 +23,15 @@
         </div>
     {/if}
 
-    <div class="title">
-        <div class="trackTitle">{trackTitle}</div>
-        <div class="albumInfo">{albumInfo}</div>
-        <Seekbar />
-    </div>
+    {#if audioPlayer.currentlyPlaying !== null}
+        <div class="title">
+            <div class="trackTitle">{trackTitle}</div>
+            <div class="albumInfo">{albumInfo}</div>
+            <Seekbar />
+        </div>
+    {:else}
+        <div class="trackTitle" style="margin-right: auto;">Not Playing</div>
+    {/if}
 </div>
 
 <style>

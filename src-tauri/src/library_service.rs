@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard, OnceLock};
 
@@ -151,6 +152,10 @@ impl LibraryService {
                 FOREIGN KEY (playlist_id) REFERENCES playlists (id) ON DELETE CASCADE,
                 FOREIGN KEY (track_id)    REFERENCES tracks    (id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS directories (
+                path        TEXT
+            );
         ",
         )?;
 
@@ -252,6 +257,22 @@ impl LibraryService {
             ],
         )?;
 
+        Ok(())
+    }
+
+    // -----------------------------------------------------------------------
+    // Queries — Directories
+    // -----------------------------------------------------------------------
+    pub fn get_directories(&self) -> Result<VecDeque<PathBuf>> {
+        let conn = self.lock();
+        let mut stmt = conn.prepare("SELECT path FROM directories")?;
+        let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
+        rows.map(|r| r.map_err(Into::into).map(PathBuf::from)).collect()
+    }
+
+    pub fn delete_directory(&self, path: &str) -> Result<()> {
+        let conn = self.lock();
+        conn.execute("DELETE FROM directories WHERE path = ?1", params![path])?;
         Ok(())
     }
 

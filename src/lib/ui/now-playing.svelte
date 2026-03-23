@@ -25,7 +25,7 @@
         border-radius: 50px;
         background-color: var(--color-header);
         position: absolute;
-        backdrop-filter: blur(12px);
+        backdrop-filter: var(--blur-vibrance);
         bottom: 0;
         left: 0;
         z-index: 100;

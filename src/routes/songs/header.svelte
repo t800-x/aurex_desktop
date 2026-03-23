@@ -45,7 +45,7 @@
         position: absolute;
         top: 0;
         z-index: 100;
-        backdrop-filter: blur(12px);
+        backdrop-filter: var(--blur-vibrance);
     }
 
     .title {
