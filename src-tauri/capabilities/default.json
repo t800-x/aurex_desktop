@@ -7,6 +7,7 @@
     "core:default",
     "opener:default",
     "core:image:allow-from-path",
-    "fs:default"
+    "fs:default",
+    "dialog:default"
   ]
 }

@@ -10,7 +10,6 @@ mod lyrics;
 mod traits;
 
 use app_state::ManagedState;
-use std::fs::File;
 use tauri::Manager;
 use tauri_specta::{collect_commands, Builder};
 
@@ -22,10 +21,6 @@ use crate::{
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     ensure_paths_created();
-
-    if !constants::dir_file().exists() {
-        _ = File::create(constants::dir_file()).expect("Failed to create directories file");
-    }
 
     let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
         app_state::get_state,
@@ -50,6 +45,9 @@ pub fn run() {
         media_lib_cmd::remove_from_playlist,
         media_lib_cmd::get_pl_id_by_name,
         media_lib_cmd::get_recently_added,
+        media_lib_cmd::get_directories,
+        media_lib_cmd::add_directory,
+        media_lib_cmd::remove_directory,
 
         audio_player::get_player,
         audio_player::play,
@@ -84,6 +82,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let managed_state = ManagedState::new(app.handle().clone());
             app.manage(managed_state);

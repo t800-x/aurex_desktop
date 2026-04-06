@@ -5,6 +5,38 @@ use crate::{library_service::library_service, models::{Album, Artist, FullTrack,
 
 #[tauri::command]
 #[specta::specta]
+pub async fn get_directories() -> Vec<String> {
+    if let Ok(library) = library_service().lock() {
+        if let Ok(dirs) = library.get_directories() {
+            return dirs
+                .into_iter()
+                .map(|p| p.to_string_lossy().to_string())
+                .collect();
+        }
+    }
+    Vec::new()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn add_directory(app_handle: AppHandle, path: String) {
+    if let Ok(library) = library_service().lock() {
+        _ = library.add_directory(&path);
+        _ = app_handle.emit("directories-changed", ());
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_directory(app_handle: AppHandle, path: String) {
+    if let Ok(library) = library_service().lock() {
+        _ = library.delete_directory(&path);
+        _ = app_handle.emit("directories-changed", ());
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
 pub async fn get_recently_added() -> Vec<Album> {
 
     if let Ok(library) = library_service().lock() {

@@ -5,7 +5,8 @@ export enum Section {
     songs,
     albums,
     artists,
-    recentlyAdded
+    recentlyAdded,
+    settings
 }
 
 export enum RightPaneContent {
@@ -29,7 +30,17 @@ class Router {
     isDeletePlaylistDialogOpen = $state(false);
     pendingDeletePlaylist = $state<Playlist | null>(null);
 
+    showOnboarding = $state(false);
+
     constructor() {}
+
+    openOnboarding() {
+        this.showOnboarding = true;
+    }
+
+    closeOnboarding() {
+        this.showOnboarding = false;
+    }
 
     openDeletePlaylistDialog(playlist: Playlist) {
         this.pendingDeletePlaylist = playlist;

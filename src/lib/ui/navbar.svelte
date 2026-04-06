@@ -16,6 +16,7 @@
     import PlaylistContextMenu from "./playlist-context-menu.svelte";
     import RecentlyAddedIcon from "$lib/icons/recently-added-icon.svelte";
     import { event } from "@tauri-apps/api";
+    import SettingsIcon from "$lib/icons/settings-icon.svelte";
 
     const width = 268;
 
@@ -88,6 +89,10 @@
             </ContextMenu.Root>
         {/each}
     {/if}
+
+    <div style="flex: 1;"></div>
+    <div style="height: 1px; width: calc(100% - 20px); background: var(--color-divider); margin: 4px 0;"></div>
+    <NavbarItem text="Settings" Icon={SettingsIcon} section={Section.settings} />
 </div>
  
 

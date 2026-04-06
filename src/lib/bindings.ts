@@ -80,6 +80,15 @@ async getPlIdByName(name: string) : Promise<number | null> {
 async getRecentlyAdded() : Promise<Album[]> {
     return await TAURI_INVOKE("get_recently_added");
 },
+async getDirectories() : Promise<string[]> {
+    return await TAURI_INVOKE("get_directories");
+},
+async addDirectory(path: string) : Promise<void> {
+    await TAURI_INVOKE("add_directory", { path });
+},
+async removeDirectory(path: string) : Promise<void> {
+    await TAURI_INVOKE("remove_directory", { path });
+},
 async getPlayer() : Promise<Result<AudioPlayer, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_player") };

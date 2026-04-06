@@ -287,24 +287,13 @@ fn get_all_audio_files() -> VecDeque<PathBuf> {
 }
 
 fn get_directories() -> VecDeque<PathBuf> {
-    let mut directories = VecDeque::<PathBuf>::new();
-
-    let file = File::open(constants::dir_file());
-    let reader = BufReader::new(file.unwrap());
-
-    for line in reader.lines() {
-        match line {
-            Ok(line) => {
-                let path = PathBuf::from(line);
-                if path.exists() {
-                    directories.push_back(path);
-                }
-            }
-            Err(e) => {
-                eprintln!("{}", e);
-            }
-        }
+    if let Ok(library) = library_service().lock() {
+        return library
+            .get_directories()
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|p| p.exists())
+            .collect();
     }
-
-    return directories;
+    VecDeque::new()
 }

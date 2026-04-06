@@ -276,6 +276,16 @@ impl LibraryService {
         Ok(())
     }
 
+    pub fn add_directory(&self, path: &str) -> Result<()> {
+       let conn = self.lock();
+        conn.execute(
+            "INSERT INTO directories (path) SELECT ?1 \
+             WHERE NOT EXISTS (SELECT 1 FROM directories WHERE path = ?1)",
+            params![path],
+        )?;
+        Ok(())
+    }
+
     // -----------------------------------------------------------------------
     // Queries — Artists
     // -----------------------------------------------------------------------

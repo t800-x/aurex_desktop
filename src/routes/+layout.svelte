@@ -14,14 +14,24 @@
   import CreatePlaylistDialog from "$lib/ui/create-playlist-dialog.svelte";
   import DeletePlaylistDialog from "$lib/ui/delete-playlist-dialog.svelte";
   import RecentlyAddedPage from "./recently-added/recently-added-page.svelte";
-    import { onMount } from "svelte";
-    import { commands } from "$lib/bindings";
+  import { onMount } from "svelte";
+  import { commands } from "$lib/bindings";
+  import SettingsPage from "./settings/settings-page.svelte";
+  import OnboardingDialog from "$lib/ui/onboarding-dialog.svelte";
+
 
   let blocked = $derived(
     router.rightPaneContent !== null && router.rightPaneOverlaying,
   );
 
-  onMount(() => commands.index());
+  onMount(async () => {
+    const dirs = await commands.getDirectories();
+    if (dirs.length === 0) {
+        router.openOnboarding();
+    } else {
+        commands.index();
+    }
+  });
 </script>
 
 <div class="appRoot dark">
@@ -35,6 +45,7 @@
       <SearchPage />
       <NowPlaying />
       <PlaylistPage />
+      <SettingsPage />
     </main>
 
     <RightPane />
@@ -42,6 +53,7 @@
 
   <CreatePlaylistDialog />
   <DeletePlaylistDialog />
+  <OnboardingDialog />
 </div>
 
 <style>
