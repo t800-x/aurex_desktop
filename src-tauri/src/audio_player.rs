@@ -428,6 +428,20 @@ pub async fn change_queue_index(
 
 #[tauri::command]
 #[specta::specta]
+pub async fn remove_from_queue(state: tauri::State<'_, ManagedPlayer>, index: i32) -> Result<AudioPlayer, String> {
+
+    state.update(|player| {
+        player.real_queue.remove(index as usize);
+        player.queue.remove(index as usize);
+
+        state.update_queue(&player); 
+    }).await;
+
+    Ok(state.get().await)
+}
+
+#[tauri::command]
+#[specta::specta]
 pub async fn seek(time: f64) {
     let audio_engine = audio_player().lock().await;
     _ = audio_engine.seek(time).await;

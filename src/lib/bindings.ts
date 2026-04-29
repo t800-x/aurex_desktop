@@ -212,6 +212,14 @@ async previous() : Promise<Result<AudioPlayer, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async removeFromQueue(index: number) : Promise<Result<AudioPlayer, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("remove_from_queue", { index }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async fulltrackFromId(id: number) : Promise<FullTrack | null> {
     return await TAURI_INVOKE("fulltrack_from_id", { id });
 },

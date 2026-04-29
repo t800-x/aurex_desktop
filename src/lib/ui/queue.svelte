@@ -11,6 +11,7 @@
     let draggedTo = $state<number | null>(null);
 
     let empty = $derived(audioPlayer.queue.length === 0);
+    let lastIndex = $derived(audioPlayer.queue.length - 1);
 
     let draggedToRef = { current: null as number | null };
 
@@ -80,6 +81,7 @@
                     <QueueTile
                         track={track}
                         index={index}
+                        lastIndex={lastIndex}
                         bind:draggedFrom
                         bind:draggedTo
                     />

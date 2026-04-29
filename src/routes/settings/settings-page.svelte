@@ -203,7 +203,6 @@
     .dirPath {
         flex: 1;
         font-size: 13px;
-        font-family: monospace;
         color: rgba(255, 255, 255, 0.8);
         white-space: nowrap;
         overflow: hidden;

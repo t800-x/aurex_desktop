@@ -60,7 +60,6 @@
     transition: width 0.3s ease;
     flex-shrink: 0;
     backdrop-filter: var(--blur-vibrance);
-    box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
   }
   .rightPane.open {
     width: 320px;
@@ -74,6 +73,7 @@
   }
   .rightPane.overlay.open {
     width: min(320px, 85vw);
+    box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
   }
   .rightPaneInner {
     width: 320px;

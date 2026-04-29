@@ -36,7 +36,7 @@
 
             <div class="coverContainer">
                 {#if album.album_art !== null}
-                    <img class="albumCover" src={imgSrc} alt="">
+                    <img decoding="async" loading="lazy" class="albumCover" src={imgSrc} alt="">
                 {:else}
                     <div class="albumCover">
                         <DoubleNoteIcon />
@@ -98,6 +98,7 @@
         justify-content: center;
         background-color: #1c1c1e;
         color: #3d3c41;
+        content-visibility: auto;
     }
 
     .label {

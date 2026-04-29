@@ -166,7 +166,6 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-family: monospace;
     }
 
     .removeBtn {

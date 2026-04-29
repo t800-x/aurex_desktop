@@ -9,11 +9,13 @@
 
     let {
         track,
-        playList,
+        index,
+        lastIndex,
         extra,
     } : {
         track: FullTrack;
-        playList: () => void;
+        index: number;
+        lastIndex: number;
         extra?: Snippet;
     } = $props();
 
@@ -32,11 +34,10 @@
     <ContextMenu.Item onclick={async () => await loadAndPlay(track)}>
         Play
     </ContextMenu.Item>
-    <ContextMenu.Item onclick={() => playList()}>
-        Play from here
-    </ContextMenu.Item>
-    <ContextMenu.Item onclick={async () => commands.playNext(track)}>Play Next</ContextMenu.Item>
-    <ContextMenu.Item onclick={async () => commands.addToQueue(track)}>Add to Queue</ContextMenu.Item>
+    
+    <ContextMenu.Item onclick={() => commands.changeQueueIndex(index, 0)}>Move to Top</ContextMenu.Item>
+    <ContextMenu.Item onclick={() => commands.changeQueueIndex(index, lastIndex)}>Move to Bottom</ContextMenu.Item>
+
     <ContextMenu.Sub>
         <ContextMenu.SubTrigger>Add to Playlist</ContextMenu.SubTrigger>
         <ContextMenu.Portal>
@@ -51,5 +52,9 @@
             </ContextMenu.SubContent>
         </ContextMenu.Portal>
     </ContextMenu.Sub>
+
+    <ContextMenu.Separator />
+
+    <ContextMenu.Item onclick={() => commands.removeFromQueue(index)} variant="destructive">Remove from Queue</ContextMenu.Item>
     {@render extra?.()}
 </ContextMenu.Content>

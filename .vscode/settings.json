@@ -1,3 +1,10 @@
 {
-  "svelte.enable-ts-plugin": true
+  "svelte.enable-ts-plugin": true,
+  "rust-analyzer.check.overrideCommand": [
+    "cargo", "check",
+    "--workspace",
+    "--message-format=json-diagnostic-rendered-ansi",
+    "--exclude", "ffmpeg-sys-next",
+    "--all-targets"
+  ]
 }

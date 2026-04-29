@@ -31,7 +31,7 @@
         align-self: flex-start;
         height: 50px;
         flex-shrink: 0;
-        width: calc(100% - 8px);
+        width: calc(100% - 10px);
         border-bottom: 1px solid var(--color-divider);
         border-radius: 8px;
         display: flex;

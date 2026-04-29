@@ -1,18 +1,22 @@
 <script lang="ts">
-    import type { FullTrack } from "$lib/bindings";
+    import { commands, type FullTrack } from "$lib/bindings";
     import DoubleNoteIcon from "$lib/icons/double-note-icon.svelte";
     import { convertFileSrc } from "@tauri-apps/api/core";
     import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
     import { onMount } from 'svelte';
+    import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
+    import QueueContextMenu from "./queue-context-menu.svelte";
 
     let {
         track,
         index,
+        lastIndex,
         draggedFrom = $bindable(),
         draggedTo = $bindable(),
     }: {
         track: FullTrack;
         index: number;
+        lastIndex: number;
         draggedFrom: number | null;
         draggedTo: number | null;
     } = $props();
@@ -66,25 +70,40 @@
     });
 </script>
 
-<div
-    role="listitem"
-    bind:this={el}
-    class="tile"
-    class:dragging={draggedFrom === index}
-    style:transform="translateY({shift()}px)"
-    onpointerenter={() => { if (draggedFrom !== null) draggedTo = currentIndex; }}
-    data-index={currentIndex}
->
-    {#if track.album_art !== null}
-        <img class="albumCover" src={coverSrc} alt="">
-    {:else}
-        <div class="albumCover"><DoubleNoteIcon /></div>
-    {/if}
-    <div class="title">
-        <div class="trackTitle">{trackTitle}</div>
-        <div class="albumInfo">{albumInfo}</div>
-    </div>
-</div>
+<ContextMenu.Root>
+    <ContextMenu.Trigger>
+        <div
+            role="listitem"
+            bind:this={el}
+            class="tile"
+            class:dragging={draggedFrom === index}
+            style:transform="translateY({shift()}px)"
+            onpointerenter={() => { if (draggedFrom !== null) draggedTo = currentIndex; }}
+            data-index={currentIndex}
+        >
+            {#if track.album_art !== null}
+                <img class="albumCover" src={coverSrc} alt="">
+            {:else}
+                <div class="albumCover"><DoubleNoteIcon /></div>
+            {/if}
+            <div class="title">
+                <div class="trackTitle">{trackTitle}</div>
+                <div class="albumInfo">{albumInfo}</div>
+            </div>
+
+            <!-- svelte-ignore a11y_consider_explicit_label -->
+            <button class="removeBtn" onclick={(e) => commands.removeFromQueue(index)}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        
+    </ContextMenu.Trigger>
+
+    <QueueContextMenu track={track} index={index} lastIndex={lastIndex} />
+</ContextMenu.Root>
+
+
 
 <style>
     .tile {
@@ -96,6 +115,8 @@
         cursor: grab;
         border-radius: 7px;
         transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.2s ease;
+        isolation: isolate;
+        position: relative;
     }
     .tile:hover {
         background-color: var(--color-hover);
@@ -105,6 +126,36 @@
         cursor: grabbing;
     }
 
+    .removeBtn {
+        opacity: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--color-navbar-label);
+        margin-right: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0; 
+    }
+
+    .tile:hover .removeBtn {
+        opacity: 1;
+    }
+
+    .removeBtn:hover {
+        background-color: #ff453a; 
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .removeBtn:active {
+        transform: scale(0.95);
+    }
 
     .albumCover {
         height: 35px;

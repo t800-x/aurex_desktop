@@ -1,5 +1,4 @@
 @import "tailwindcss";
-
 @import "tw-animate-css";
 @import url(./colors.css);
 
@@ -54,7 +53,7 @@
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -63,12 +62,14 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-hover);
+  background: var(--color-double-hover);
   border-radius: 8px;
+
+  transition: background 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-double-hover);
+  background: var(--color-hover-w2);
 }
 
 :root {
