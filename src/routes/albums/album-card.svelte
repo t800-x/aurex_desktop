@@ -17,7 +17,7 @@
     } = $props();
 
     // svelte-ignore state_referenced_locally
-        let imgSrc = convertFileSrc(album.album_art ?? "");
+    let imgSrc = convertFileSrc(album.album_art ?? "");
 
     let artist: Artist | null = $state(null);
     let tracks: Track[] | null = $state(null);
@@ -29,9 +29,7 @@
 </script>
 
 <ContextMenu.Root>
-    <ContextMenu.Trigger>
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <ContextMenu.Trigger class="w-full">
         <div class="card" onclick={onclick}>
 
             <div class="coverContainer">
@@ -44,6 +42,7 @@
                 {/if}
 
                 <CardButton class="cardButton" Icon={PlayIcon} onclick={async (e) => {
+                    e.stopPropagation();
                     commands.playTracks(tracks!, 0);
                 }}/>
             </div>
@@ -66,8 +65,8 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        justify-content: center;
-        width: 205px;
+        justify-content: flex-start;
+        width: 100%; 
         min-width: 0;
         cursor: default;
         transition: transform 0.15s ease-in-out;
@@ -76,10 +75,13 @@
     .coverContainer {
         isolation: isolate;
         position: relative;
+        width: 100%; 
+        aspect-ratio: 1 / 1; 
+        margin-bottom: 8px; 
     }
 
     .card:hover {
-        transform: scale(1.1);
+        transform: scale(1.05); 
     }
 
     .card:hover :global(.cardButton) {
@@ -87,18 +89,18 @@
     }
 
     .albumCover {
-        height: 205px;
-        width: 205px;
+        height: 100%;
+        width: 100%;
+        object-fit: cover; 
         border-radius: 6px;
-        border-color: var(--color-divider);
-        border-width: 1px;
+        border: 1px solid var(--color-divider);
         box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: #1c1c1e;
         color: #3d3c41;
-        content-visibility: auto;
+        overflow: hidden;
     }
 
     .label {

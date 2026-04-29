@@ -1,13 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import Header from "./header.svelte";
+    import Header from "../albums/header.svelte";
     import { commands, type Album } from "$lib/bindings";
     import { VList } from "virtua/svelte";
-    import AlbumCard from "./album-card.svelte";
-    import AlbumView from "./album-view.svelte";
+    import AlbumCard from "../albums/album-card.svelte";
+    import AlbumView from "../albums/album-view.svelte";
     import { getContext } from "svelte";
     import type { StackContext } from "$lib/ui/stack-view.svelte";
-    import { router } from "$lib/router.svelte";
     import { listen } from "@tauri-apps/api/event";
 
     const { push, pop, canPop } = getContext<StackContext>('stack');
@@ -20,19 +19,9 @@
         proxy = [...albums];
 
         await listen<void>('indexing-done', async (event) => {
-            albums = await commands.getAllAlbums();
+            albums = await commands.getRecentlyAdded();
             proxy = [...albums];
         });
-    });
-
-    // Consume a pending album navigation request from the router
-    // (e.g. clicking an album card in the search page)
-    $effect(() => {
-        const target = router.pendingAlbum;
-        if (target !== null) {
-            router.pendingAlbum = null;
-            push(AlbumView, { album: target });
-        }
     });
 
     async function onFilterTermChanged(term: string) {
@@ -42,9 +31,22 @@
             : albums.filter(a => a.title.toLowerCase().includes(lowerTerm));
     }
 
-    const ITEM_WIDTH = 205;
+    const MIN_ITEM_WIDTH = 205;
+    const GAP = 8;
+    const HORIZONTAL_PADDING = 90; 
+
     let containerWidth = $state(0);
-    let cols = $derived(Math.max(1, Math.floor(containerWidth / ITEM_WIDTH)));
+    
+    // Prevent negative widths when container hasn't mounted yet
+    let availableWidth = $derived(Math.max(0, containerWidth - HORIZONTAL_PADDING));
+    
+    // Default to 1 column if unmeasured to stop virtua from crashing
+    let cols = $derived(
+        containerWidth === 0 
+            ? 1 
+            : Math.max(1, Math.floor((availableWidth + GAP) / (MIN_ITEM_WIDTH + GAP)))
+    );
+    
     let rows = $derived(
         Array.from({ length: Math.ceil(proxy.length / cols) }, (_, i) =>
             proxy.slice(i * cols, i * cols + cols)
@@ -52,37 +54,41 @@
     );
 </script>
 
-<div class="page albumsPage">
+<div class="albums">
     <div class="albumList">
         <Header title={"Albums"} onchanged={onFilterTermChanged}/>
 
-        <div bind:clientWidth={containerWidth} style="height: 100%;">
-            <VList data={rows} style="height: 100%;" getKey={(row: any) => row.map((a: { id: any }) => a.id).join('-')}>
-                {#snippet children(row: any, index: number)}
-                    {#if index === 0}
-                        <div class="h-[95px]"></div>
-                    {/if}
+        <div bind:clientWidth={containerWidth} style="height: 100%; width: 100%;">
+            {#if containerWidth > 0}
+                <VList data={rows} style="height: 100%;" getKey={(row: any) => row.map((a: { id: any }) => a.id).join('-')}>
+                    {#snippet children(row: any, index: number)}
+                        {#if index === 0}
+                            <div class="h-[95px]"></div>
+                        {/if}
 
-                    <div class="listContainer" style="display: grid; grid-template-columns: repeat({cols}, 1fr); gap: 8px;">
-                        {#each row as album}
-                            <AlbumCard
-                                {album}
-                                onclick={() => push(AlbumView, { album })}
-                            />
-                        {/each}
-                    </div>
+                        <div class="listContainer" style="display: grid; grid-template-columns: repeat({cols}, minmax(0, 1fr)); gap: {GAP}px;">
+                            {#each row as album}
+                                <div style="min-width: 0; width: 100%;">
+                                    <AlbumCard
+                                        {album}
+                                        onclick={() => push(AlbumView, { album })}
+                                    />
+                                </div>
+                            {/each}
+                        </div>
 
-                    {#if index === rows.length - 1}
-                        <div class="h-[80px]"></div>
-                    {/if}
-                {/snippet}
-            </VList>
+                        {#if index === rows.length - 1}
+                            <div class="h-[80px]"></div>
+                        {/if}
+                    {/snippet}
+                </VList>
+            {/if}
         </div>
     </div>
 </div>
 
 <style>
-    .albumsPage {
+    .albums {
         display: flex;
         flex-direction: column;
         height: 100%;

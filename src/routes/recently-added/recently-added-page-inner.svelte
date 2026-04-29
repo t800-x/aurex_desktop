@@ -31,9 +31,22 @@
             : albums.filter(a => a.title.toLowerCase().includes(lowerTerm));
     }
 
-    const ITEM_WIDTH = 205;
+    const MIN_ITEM_WIDTH = 205;
+    const GAP = 8;
+    const HORIZONTAL_PADDING = 90; 
+
     let containerWidth = $state(0);
-    let cols = $derived(Math.max(1, Math.floor(containerWidth / ITEM_WIDTH)));
+    
+    // Prevent negative widths when container hasn't mounted yet
+    let availableWidth = $derived(Math.max(0, containerWidth - HORIZONTAL_PADDING));
+    
+    // Default to 1 column if unmeasured to stop virtua from crashing
+    let cols = $derived(
+        containerWidth === 0 
+            ? 1 
+            : Math.max(1, Math.floor((availableWidth + GAP) / (MIN_ITEM_WIDTH + GAP)))
+    );
+    
     let rows = $derived(
         Array.from({ length: Math.ceil(proxy.length / cols) }, (_, i) =>
             proxy.slice(i * cols, i * cols + cols)
@@ -45,27 +58,31 @@
     <div class="albumList">
         <Header title={"Recently Added"} onchanged={onFilterTermChanged}/>
 
-        <div bind:clientWidth={containerWidth} style="height: 100%;">
-            <VList data={rows} style="height: 100%;" getKey={(row: any) => row.map((a: { id: any }) => a.id).join('-')}>
-                {#snippet children(row: any, index: number)}
-                    {#if index === 0}
-                        <div class="h-[95px]"></div>
-                    {/if}
+        <div bind:clientWidth={containerWidth} style="height: 100%; width: 100%;">
+            {#if containerWidth > 0}
+                <VList data={rows} style="height: 100%;" getKey={(row: any) => row.map((a: { id: any }) => a.id).join('-')}>
+                    {#snippet children(row: any, index: number)}
+                        {#if index === 0}
+                            <div class="h-[95px]"></div>
+                        {/if}
 
-                    <div class="listContainer" style="display: grid; grid-template-columns: repeat({cols}, 1fr); gap: 8px;">
-                        {#each row as album}
-                            <AlbumCard
-                                {album}
-                                onclick={() => push(AlbumView, { album })}
-                            />
-                        {/each}
-                    </div>
+                        <div class="listContainer" style="display: grid; grid-template-columns: repeat({cols}, minmax(0, 1fr)); gap: {GAP}px;">
+                            {#each row as album}
+                                <div style="min-width: 0; width: 100%;">
+                                    <AlbumCard
+                                        {album}
+                                        onclick={() => push(AlbumView, { album })}
+                                    />
+                                </div>
+                            {/each}
+                        </div>
 
-                    {#if index === rows.length - 1}
-                        <div class="h-[80px]"></div>
-                    {/if}
-                {/snippet}
-            </VList>
+                        {#if index === rows.length - 1}
+                            <div class="h-[80px]"></div>
+                        {/if}
+                    {/snippet}
+                </VList>
+            {/if}
         </div>
     </div>
 </div>
