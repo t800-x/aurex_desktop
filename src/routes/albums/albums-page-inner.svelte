@@ -19,7 +19,7 @@
         proxy = [...albums];
 
         await listen<void>('indexing-done', async (event) => {
-            albums = await commands.getRecentlyAdded();
+            albums = await commands.getAllAlbums();
             proxy = [...albums];
         });
     });
