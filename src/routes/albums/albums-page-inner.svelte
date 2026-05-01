@@ -59,30 +59,28 @@
         <Header title={"Albums"} onchanged={onFilterTermChanged}/>
 
         <div bind:clientWidth={containerWidth} style="height: 100%; width: 100%;">
-            {#if containerWidth > 0}
-                <VList data={rows} style="height: 100%;" getKey={(row: any) => row.map((a: { id: any }) => a.id).join('-')}>
-                    {#snippet children(row: any, index: number)}
-                        {#if index === 0}
-                            <div class="h-[95px]"></div>
-                        {/if}
+            <VList data={rows} style="height: 100%;" getKey={(row: any) => row.map((a: { id: any }) => a.id).join('-')}>
+                {#snippet children(row: any, index: number)}
+                    {#if index === 0}
+                        <div class="h-[95px]"></div>
+                    {/if}
 
-                        <div class="listContainer" style="display: grid; grid-template-columns: repeat({cols}, minmax(0, 1fr)); gap: {GAP}px;">
-                            {#each row as album}
-                                <div style="min-width: 0; width: 100%;">
-                                    <AlbumCard
-                                        {album}
-                                        onclick={() => push(AlbumView, { album })}
-                                    />
-                                </div>
-                            {/each}
-                        </div>
+                    <div class="listContainer" style="display: grid; grid-template-columns: repeat({cols}, minmax(0, 1fr)); gap: {GAP}px;">
+                        {#each row as album}
+                            <div style="min-width: 0; width: 100%;">
+                                <AlbumCard
+                                    {album}
+                                    onclick={() => push(AlbumView, { album })}
+                                />
+                            </div>
+                        {/each}
+                    </div>
 
-                        {#if index === rows.length - 1}
-                            <div class="h-[80px]"></div>
-                        {/if}
-                    {/snippet}
-                </VList>
-            {/if}
+                    {#if index === rows.length - 1}
+                        <div class="h-[80px]"></div>
+                    {/if}
+                {/snippet}
+            </VList>
         </div>
     </div>
 </div>
