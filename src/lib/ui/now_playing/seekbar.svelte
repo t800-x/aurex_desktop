@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { audioPlayer } from '$lib/player.svelte';
-  import { commands } from '$lib/bindings';
-  import { formatDuration } from '$lib/helpers';
+  import { audioPlayer } from "$lib/player.svelte";
+  import { commands } from "$lib/bindings";
+  import { formatDuration } from "$lib/helpers";
 
   let dragging = $state(false);
   let hovering = $state(false);
@@ -23,15 +23,18 @@
   function getPositionFromEvent(e: MouseEvent): number {
     if (!trackEl) return audioPlayer.position;
     const rect = trackEl.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const ratio = Math.min(
+      1,
+      Math.max(0, (e.clientX - rect.left) / rect.width),
+    );
     return ratio * getDuration();
   }
 
   function onMouseDown(e: MouseEvent): void {
     dragging = true;
     pendingValue = getPositionFromEvent(e);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
   }
 
   function onMouseMove(e: MouseEvent): void {
@@ -43,30 +46,34 @@
     dragging = false;
     await commands.seek(target);
     pendingValue = null;
-    window.removeEventListener('mousemove', onMouseMove);
-    window.removeEventListener('mouseup', onMouseUp);
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", onMouseUp);
   }
 
   function onKeyDown(e: KeyboardEvent): void {
     const dur = getDuration();
     const step = dur * 0.01;
-    if (e.key === 'ArrowRight') commands.seek(Math.min(dur, audioPlayer.position + step));
-    if (e.key === 'ArrowLeft') commands.seek(Math.max(0, audioPlayer.position - step));
+    if (e.key === "ArrowRight")
+      commands.seek(Math.min(dur, audioPlayer.position + step));
+    if (e.key === "ArrowLeft")
+      commands.seek(Math.max(0, audioPlayer.position - step));
   }
 
   let active = $derived(() => dragging || hovering);
 </script>
 
 <div class="seekbar-wrap">
-  <span class="time">{formatDuration(pendingValue ?? audioPlayer.position)}</span>
+  <span class="time"
+    >{formatDuration(pendingValue ?? audioPlayer.position)}</span
+  >
 
   <div
     class="track"
     class:active={active()}
     bind:this={trackEl}
     onmousedown={onMouseDown}
-    onmouseenter={() => hovering = true}
-    onmouseleave={() => hovering = false}
+    onmouseenter={() => (hovering = true)}
+    onmouseleave={() => (hovering = false)}
     onkeydown={onKeyDown}
     role="slider"
     tabindex="0"
@@ -165,6 +172,4 @@
   .handle.active {
     transform: translate(50%, -50%) scale(1);
   }
-
-
 </style>

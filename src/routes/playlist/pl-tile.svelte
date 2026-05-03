@@ -10,8 +10,8 @@
     track,
     playList,
     playlist,
-    index
-  } : {
+    index,
+  }: {
     track: FullTrack;
     playList: () => void;
     playlist: Playlist | null;
@@ -20,7 +20,9 @@
 
   let hovered = $state(false);
 
-  let artSrc = $derived(track.album_art ? convertFileSrc(track.album_art) : null);
+  let artSrc = $derived(
+    track.album_art ? convertFileSrc(track.album_art) : null,
+  );
 </script>
 
 <ContextMenu.Root>
@@ -29,14 +31,18 @@
       role="listitem"
       class:odd={index % 2 !== 0}
       class="tile"
-      onmouseenter={() => hovered = true}
-      onmouseleave={() => hovered = false}
+      onmouseenter={() => (hovered = true)}
+      onmouseleave={() => (hovered = false)}
       ondblclick={() => loadAndPlay(track)}
     >
       <!-- leading: index or play button -->
       <div class="leading" aria-hidden="true">
         {#if hovered}
-          <button class="playBtn" aria-label="Play track" onclick={() => playList()}>
+          <button
+            class="playBtn"
+            aria-label="Play track"
+            onclick={() => playList()}
+          >
             <PlayIcon size={15} />
           </button>
         {:else}
@@ -74,7 +80,7 @@
       </div>
     </div>
   </ContextMenu.Trigger>
-  <PlaylistTrackContextMenu track={track} playList={playList} playlist={playlist} />
+  <PlaylistTrackContextMenu {track} {playList} {playlist} />
 </ContextMenu.Root>
 
 <style>

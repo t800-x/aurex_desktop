@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { setContext } from 'svelte';
-  import type { Component } from 'svelte';
+  import { setContext } from "svelte";
+  import type { Component } from "svelte";
 
   interface StackEntry {
     component: Component<any>;
@@ -21,11 +21,19 @@
     contextKey?: string;
   }
 
-  let { initialComponent, initialProps = {}, contextKey = 'stack' }: Props = $props();
+  let {
+    initialComponent,
+    initialProps = {},
+    contextKey = "stack",
+  }: Props = $props();
 
   let stack = $state<StackEntry[]>([
     // svelte-ignore state_referenced_locally
-        { component: initialComponent, props: initialProps, id: crypto.randomUUID() }
+    {
+      component: initialComponent,
+      props: initialProps,
+      id: crypto.randomUUID(),
+    },
   ]);
 
   function push(component: Component<any>, props: Record<string, any> = {}) {
@@ -45,11 +53,14 @@
   }
 
   // svelte-ignore state_referenced_locally
-    setContext<StackContext>(contextKey, { push, pop, replace, canPop });
+  setContext<StackContext>(contextKey, { push, pop, replace, canPop });
 </script>
 
 {#each stack as page, i (page.id)}
-  <div style:display={i === stack.length - 1 ? 'contents' : 'none'} style="width: 100%; height: 100%">
+  <div
+    style:display={i === stack.length - 1 ? "contents" : "none"}
+    style="width: 100%; height: 100%"
+  >
     <page.component {...page.props} />
   </div>
 {/each}

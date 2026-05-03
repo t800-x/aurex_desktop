@@ -4,26 +4,23 @@
   let {
     text,
     Icon,
-    iconSize = 20
+    iconSize = 20,
   }: {
     text: string;
     Icon: any;
     iconSize?: number;
   } = $props();
-  
-
 </script>
 
-
 <button
-    class="nav-item"
-    onclick={() => {
-      router.openCreatePlaylistDialog(null);
-      console.log("create playlist")
-    }}
-    >
-    <Icon className="nav-icon" size={iconSize}/>
-    <span>{text}</span>
+  class="nav-item"
+  onclick={() => {
+    router.openCreatePlaylistDialog(null);
+    console.log("create playlist");
+  }}
+>
+  <Icon className="nav-icon" size={iconSize} />
+  <span>{text}</span>
 </button>
 
 <style>
@@ -42,7 +39,7 @@
     box-shadow: none;
     overflow: visible;
   }
-  
+
   .nav-item:hover {
     background: rgba(255, 255, 255, 0.1);
   }
@@ -50,13 +47,13 @@
   .nav-item:active {
     background: rgba(255, 255, 255, 0.2);
   }
-  
+
   .nav-item span {
     color: white;
     font-size: 15px;
     font-weight: 500;
   }
-  
+
   .nav-item :global(svg),
   .nav-item :global(i) {
     color: rgb(250, 88, 106);

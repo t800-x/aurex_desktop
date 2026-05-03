@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { RightPaneContent, router } from '$lib/router.svelte';
-    import Queue from './queue.svelte';
-    import Lyrics from './lyrics.svelte';
+  import { onMount } from "svelte";
+  import { RightPaneContent, router } from "$lib/router.svelte";
+  import Queue from "./queue.svelte";
+  import Lyrics from "./lyrics.svelte";
 
   function checkWidth() {
     router.rightPaneOverlaying = window.innerWidth < 1500;
@@ -10,8 +10,8 @@
   let rightPaneOpen = $derived(router.rightPaneContent !== null);
   onMount(() => {
     checkWidth();
-    window.addEventListener('resize', checkWidth);
-    return () => window.removeEventListener('resize', checkWidth);
+    window.addEventListener("resize", checkWidth);
+    return () => window.removeEventListener("resize", checkWidth);
   });
   function closePane() {
     router.setRightPaneContent(null);
@@ -19,7 +19,6 @@
 
   let isQueue = $derived(router.rightPaneContent === RightPaneContent.queue);
 </script>
-
 
 {#if router.rightPaneOverlaying && rightPaneOpen}
   <div class="backdrop" onclick={closePane} aria-hidden="true"></div>
@@ -29,19 +28,15 @@
   class:open={rightPaneOpen}
   class:overlay={router.rightPaneOverlaying}
 >
-
-
   <div class="rightPaneInner">
-      <div style:display={isQueue ? 'contents' : 'none'}>
-          <Queue />
-      </div>
-      <div style:display={isQueue ? 'none' : 'contents'}>
-          <Lyrics />
-      </div>
+    <div style:display={isQueue ? "contents" : "none"}>
+      <Queue />
+    </div>
+    <div style:display={isQueue ? "none" : "contents"}>
+      <Lyrics />
+    </div>
   </div>
-
 </aside>
-
 
 <style>
   .backdrop {

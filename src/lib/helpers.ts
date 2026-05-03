@@ -17,11 +17,11 @@ export function formatDuration(seconds: bigint | number): string {
   const s = Number(seconds);
   const m = Math.floor(s / 60);
   const rem = Math.floor(s % 60);
-  return `${m}:${rem.toString().padStart(2, '0')}`;
+  return `${m}:${rem.toString().padStart(2, "0")}`;
 }
 
 export async function loadAndPlay(tr: FullTrack) {
-    commands.clear();
-    await commands.load(tr);
-    commands.play();
+  commands.clear();
+  await commands.load(tr);
+  commands.play();
 }

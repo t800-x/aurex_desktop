@@ -8,78 +8,78 @@ export const PlayerState = {
   Paused: "Paused",
   Playing: "Playing",
   Empty: "Empty",
-  Stopped: "Stopped"
-} as const
+  Stopped: "Stopped",
+} as const;
 
-export type PlayerState = typeof PlayerState[keyof typeof PlayerState]
+export type PlayerState = (typeof PlayerState)[keyof typeof PlayerState];
 
 class PlayerManager {
-    currentlyPlaying = $state<FullTrack | null>(null);
-    state = $state<PlayerState>(PlayerState.Empty);
-    queue = $state<FullTrack[]>([]);
-    history = $state<FullTrack[]>([]);
-    position = $state<number>(0.0);
-    shuffle = $state<boolean>(false);
-    lyricsLineIndex = $state<number | null>(null);
+  currentlyPlaying = $state<FullTrack | null>(null);
+  state = $state<PlayerState>(PlayerState.Empty);
+  queue = $state<FullTrack[]>([]);
+  history = $state<FullTrack[]>([]);
+  position = $state<number>(0.0);
+  shuffle = $state<boolean>(false);
+  lyricsLineIndex = $state<number | null>(null);
 
-    private async init() {
-        const result = await commands.getPlayer();
+  private async init() {
+    const result = await commands.getPlayer();
 
-        if (result.status === "ok") {
-            const player = result.data;
+    if (result.status === "ok") {
+      const player = result.data;
 
-            this.currentlyPlaying = player.currently_playing;
-            this.queue = player.queue;
-            this.state = player.state;
-            this.position = player.position;
-            this.shuffle = player.shuffle;
-            this.history = player.history;
-        }
-
-        await listen<AudioPlayer>('player-changed', (event) => {
-            const newPlayer = event.payload;
-
-            if (this.currentlyPlaying !== newPlayer.currently_playing) {
-                this.currentlyPlaying = newPlayer.currently_playing;
-            }
-
-            if (this.state !== newPlayer.state) {
-                this.state = newPlayer.state;
-            }
-
-            if (this.shuffle !== newPlayer.shuffle) {
-                this.shuffle = newPlayer.shuffle;
-                console.log(`shuffle changed to: ${this.shuffle}`)
-            }
-        });
-
-        await listen<number> ('progress-changed', (event) => {
-            let postion = event.payload;
-            if (this.position !== postion) {
-                this.position = postion;
-            }
-        });
-        
-        await listen<FullTrack[]> ('queue-changed', (event) => {
-            let newQ = event.payload;
-
-            if (!areArraysEqual(this.queue ?? [], newQ ?? [])) {
-                this.queue = newQ;
-            }
-        });
-
-        await listen<FullTrack[]> ('history-changed', (event) => {
-            let newHistory = event.payload;
-
-            if (!areArraysEqual(this.history ?? [], newHistory ?? [])) {
-                this.history = newHistory;
-            }
-        });
+      this.currentlyPlaying = player.currently_playing;
+      this.queue = player.queue;
+      this.state = player.state;
+      this.position = player.position;
+      this.shuffle = player.shuffle;
+      this.history = player.history;
     }
 
-    constructor() {
-        this.init();
-    }
+    await listen<AudioPlayer>("player-changed", (event) => {
+      const newPlayer = event.payload;
+
+      if (this.currentlyPlaying !== newPlayer.currently_playing) {
+        this.currentlyPlaying = newPlayer.currently_playing;
+      }
+
+      if (this.state !== newPlayer.state) {
+        this.state = newPlayer.state;
+      }
+
+      if (this.shuffle !== newPlayer.shuffle) {
+        this.shuffle = newPlayer.shuffle;
+        console.log(`shuffle changed to: ${this.shuffle}`);
+      }
+    });
+
+    await listen<number>("progress-changed", (event) => {
+      let postion = event.payload;
+      if (this.position !== postion) {
+        this.position = postion;
+      }
+    });
+
+    await listen<FullTrack[]>("queue-changed", (event) => {
+      let newQ = event.payload;
+
+      if (!areArraysEqual(this.queue ?? [], newQ ?? [])) {
+        this.queue = newQ;
+      }
+    });
+
+    await listen<FullTrack[]>("history-changed", (event) => {
+      let newHistory = event.payload;
+
+      if (!areArraysEqual(this.history ?? [], newHistory ?? [])) {
+        this.history = newHistory;
+      }
+    });
+  }
+
+  constructor() {
+    this.init();
+  }
 }
 
 export const audioPlayer = new PlayerManager();

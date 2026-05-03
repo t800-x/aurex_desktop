@@ -18,7 +18,7 @@
   import { commands } from "$lib/bindings";
   import SettingsPage from "./settings/settings-page.svelte";
   import OnboardingDialog from "$lib/ui/dialogs/onboarding-dialog.svelte";
-    import Titlebar from "$lib/ui/titlebar/titlebar.svelte";
+  import Titlebar from "$lib/ui/titlebar/titlebar.svelte";
 
   let { children } = $props();
 
@@ -29,9 +29,9 @@
   onMount(async () => {
     const dirs = await commands.getDirectories();
     if (dirs.length === 0) {
-        router.openOnboarding();
+      router.openOnboarding();
     } else {
-        commands.index();
+      commands.index();
     }
   });
 </script>

@@ -1,5 +1,5 @@
 <script>
-  export let icon = ""
+  export let icon = "";
 </script>
 
 {#if icon === "minimizeWin"}

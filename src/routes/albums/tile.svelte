@@ -10,8 +10,8 @@
   let {
     track,
     playList,
-    index
-  } : {
+    index,
+  }: {
     track: Track;
     playList: () => void;
     index: number;
@@ -19,7 +19,9 @@
 
   let fulltrack: FullTrack | null = $state(null);
 
-  onMount(async () => fulltrack = await commands.fulltrackFromId(Number(track.id)));
+  onMount(
+    async () => (fulltrack = await commands.fulltrackFromId(Number(track.id))),
+  );
 
   let hovered = $state(false);
 </script>
@@ -30,13 +32,17 @@
       role="listitem"
       class:odd={index % 2 !== 0}
       class="tile"
-      onmouseenter={() => hovered = true}
-      onmouseleave={() => hovered = false}
+      onmouseenter={() => (hovered = true)}
+      onmouseleave={() => (hovered = false)}
     >
       <div class="title">
         <div class="leading" aria-hidden="true">
           {#if hovered}
-            <button class="playBtn" aria-label="Play track" onclick={() => playList()}>
+            <button
+              class="playBtn"
+              aria-label="Play track"
+              onclick={() => playList()}
+            >
               <PlayIcon size={15} />
             </button>
           {:else}
@@ -55,12 +61,10 @@
     </div>
   </ContextMenu.Trigger>
 
-  <TrackContextMenu track={fulltrack!} playList={playList}/>
-
+  <TrackContextMenu track={fulltrack!} {playList} />
 </ContextMenu.Root>
 
 <style>
-
   .tile {
     display: flex;
     align-items: center;
@@ -81,26 +85,24 @@
     background-color: transparent;
   }
 
-  
   .leading {
-    width: 28px;              
+    width: 28px;
     min-width: 28px;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 12px;       
-    margin-right: 12px;        
+    margin-left: 12px;
+    margin-right: 12px;
     box-sizing: border-box;
   }
-
 
   .index {
     width: 100%;
     display: inline-block;
-    text-align: right;         
+    text-align: right;
     color: var(--color-navbar-label);
-    padding-right: 6px;        
+    padding-right: 6px;
   }
 
   .playBtn {
@@ -109,13 +111,13 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 4px 8px 4px 4px; 
+    padding: 4px 8px 4px 4px;
     border-radius: 6px;
     color: var(--color-accent);
     border: none;
     cursor: default;
     box-sizing: border-box;
-    
+
     transition: background-color 0.15s ease;
   }
 
@@ -126,7 +128,7 @@
   .title {
     display: flex;
     align-items: center;
-    flex: 1;                   
+    flex: 1;
     overflow: hidden;
   }
 
