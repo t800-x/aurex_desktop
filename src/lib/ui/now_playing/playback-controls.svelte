@@ -9,7 +9,7 @@
     import NextIcon from "$lib/icons/next-icon.svelte";
     import LoopIcon from "$lib/icons/loop-icon.svelte";
     import PlayIcon from "$lib/icons/play-icon.svelte";
-    import PoppingButton from './popping-button.svelte';
+    import PoppingButton from '../buttons/popping-button.svelte';
 
     let isPlaying = $derived(audioPlayer.state == PlayerState.Playing);
 </script>

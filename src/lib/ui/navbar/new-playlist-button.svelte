@@ -1,6 +1,5 @@
 <script lang="ts">
   import { router } from "$lib/router.svelte";
-    import CreatePlaylistDialog from "./create-playlist-dialog.svelte";
 
   let {
     text,
@@ -19,7 +18,7 @@
 <button
     class="nav-item"
     onclick={() => {
-      router.openCreatePlaylistDialog();
+      router.openCreatePlaylistDialog(null);
       console.log("create playlist")
     }}
     >

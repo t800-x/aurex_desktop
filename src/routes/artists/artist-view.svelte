@@ -5,7 +5,7 @@
     import { VList } from "virtua/svelte";
     import Tile from "../albums/tile.svelte";
     import PlayIcon from "$lib/icons/play-icon.svelte";
-    import PoppingButton from "$lib/ui/popping-button.svelte";
+    import PoppingButton from "$lib/ui/buttons/popping-button.svelte";
 
     let {
         selected,

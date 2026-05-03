@@ -4,7 +4,7 @@
     import { convertFileSrc } from "@tauri-apps/api/core";
     import DoubleNoteIcon from "$lib/icons/double-note-icon.svelte";
     import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
-    import TrackContextMenu from "$lib/ui/track-context-menu.svelte";
+    import TrackContextMenu from "$lib/ui/context_menus/track-context-menu.svelte";
     import { formatDuration } from "$lib/helpers";
     import SearchSectionHeader from "./search-section-header.svelte";
     import { VList } from "virtua/svelte";

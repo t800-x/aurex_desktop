@@ -5,7 +5,7 @@
     import { commands } from "$lib/bindings";
     import { formatDuration } from "$lib/helpers";
     import { loadAndPlay } from "$lib/helpers";
-    import TrackContextMenu from "$lib/ui/track-context-menu.svelte";
+    import TrackContextMenu from "$lib/ui/context_menus/track-context-menu.svelte";
 
     let {
         track,

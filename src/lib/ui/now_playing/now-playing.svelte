@@ -1,7 +1,4 @@
 <script lang="ts">
-    import { audioPlayer } from "$lib/player.svelte";
-    import { commands } from "$lib/bindings";
-    import { PlayerState } from "$lib/player.svelte";
     import PlaybackControls from "./playback-controls.svelte";
     import TrackInfo from "./track-info.svelte";
     import PaneControls from "./pane-controls.svelte";

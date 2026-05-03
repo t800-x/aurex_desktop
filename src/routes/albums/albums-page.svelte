@@ -1,6 +1,6 @@
 <script lang="ts">
     import { router, Section } from "$lib/router.svelte";
-    import StackView from "$lib/ui/stack-view.svelte";
+    import StackView from "$lib/ui/views/stack-view.svelte";
     import AlbumsPageInner from "./albums-page-inner.svelte";
 
     const section = Section.albums;

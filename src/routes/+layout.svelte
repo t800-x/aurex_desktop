@@ -2,24 +2,25 @@
   import "../app.css";
   import "../colors.css";
   import "@fontsource-variable/inter";
-  import Navbar from "$lib/ui/navbar.svelte";
+  import Navbar from "$lib/ui/navbar/navbar.svelte";
   import SongsPage from "./songs/songs-page.svelte";
   import AlbumsPage from "./albums/albums-page.svelte";
   import ArtistsPage from "./artists/artists-page.svelte";
   import SearchPage from "./search/search-page.svelte";
-  import NowPlaying from "$lib/ui/now-playing.svelte";
-  import RightPane from "$lib/ui/right-pane.svelte";
+  import NowPlaying from "$lib/ui/now_playing/now-playing.svelte";
+  import RightPane from "$lib/ui/right_pane/right-pane.svelte";
   import PlaylistPage from "./playlist/playlist_page.svelte";
   import { router } from "$lib/router.svelte";
-  import CreatePlaylistDialog from "$lib/ui/create-playlist-dialog.svelte";
-  import DeletePlaylistDialog from "$lib/ui/delete-playlist-dialog.svelte";
+  import CreatePlaylistDialog from "$lib/ui/dialogs/create-playlist-dialog.svelte";
+  import DeletePlaylistDialog from "$lib/ui/dialogs/delete-playlist-dialog.svelte";
   import RecentlyAddedPage from "./recently-added/recently-added-page.svelte";
   import { onMount } from "svelte";
   import { commands } from "$lib/bindings";
   import SettingsPage from "./settings/settings-page.svelte";
-  import OnboardingDialog from "$lib/ui/onboarding-dialog.svelte";
-    import Titlebar from "$lib/ui/titlebar.svelte";
+  import OnboardingDialog from "$lib/ui/dialogs/onboarding-dialog.svelte";
+    import Titlebar from "$lib/ui/titlebar/titlebar.svelte";
 
+  let { children } = $props();
 
   let blocked = $derived(
     router.rightPaneContent !== null && router.rightPaneOverlaying,
@@ -56,6 +57,8 @@
   <CreatePlaylistDialog />
   <DeletePlaylistDialog />
   <OnboardingDialog />
+
+  <div style="display: none;">{@render children()}</div>
 </div>
 
 <style>

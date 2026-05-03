@@ -1,7 +1,7 @@
 <script lang="ts">
     import { commands, type FullTrack, type Playlist } from "$lib/bindings";
     import DoubleNoteIcon from "$lib/icons/double-note-icon.svelte";
-    import PlayButtonRed from "$lib/ui/play-button-red.svelte";
+    import PlayButtonRed from "$lib/ui/buttons/play-button-red.svelte";
     import PlayIcon from "$lib/icons/play-icon.svelte";
     import ShuffleIcon from "$lib/icons/shuffle-icon.svelte";
     import { router } from "$lib/router.svelte";

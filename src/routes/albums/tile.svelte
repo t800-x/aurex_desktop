@@ -4,7 +4,7 @@
   import PlayIcon from "$lib/icons/play-icon.svelte";
   import { commands } from "$lib/bindings";
   import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
-  import TrackContextMenu from "$lib/ui/track-context-menu.svelte";
+  import TrackContextMenu from "$lib/ui/context_menus/track-context-menu.svelte";
   import { onMount } from "svelte";
 
   let {

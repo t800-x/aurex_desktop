@@ -1,7 +1,7 @@
 <script lang="ts">
     import { router } from "$lib/router.svelte";
     import { Section } from "$lib/router.svelte";
-    import StackView from "$lib/ui/stack-view.svelte";
+    import StackView from "$lib/ui/views/stack-view.svelte";
     import RecentlyAddedPageInner from "./recently-added-page-inner.svelte";
 
     const section = Section.recentlyAdded;

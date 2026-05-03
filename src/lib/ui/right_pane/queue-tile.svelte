@@ -5,7 +5,7 @@
     import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
     import { onMount } from 'svelte';
     import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
-    import QueueContextMenu from "./queue-context-menu.svelte";
+    import QueueContextMenu from "../context_menus/queue-context-menu.svelte";
 
     let {
         track,

@@ -3,11 +3,11 @@
     import DoubleNoteIcon from "$lib/icons/double-note-icon.svelte";
     import { convertFileSrc } from "@tauri-apps/api/core";
     import { getContext, onMount } from "svelte";
-    import type { StackContext } from "$lib/ui/stack-view.svelte";
+    import type { StackContext } from "$lib/ui/views/stack-view.svelte";
     import LeftHalfArrow from "$lib/icons/left-half-arrow.svelte";
-    import TransparentButton from "$lib/ui/transparent-button.svelte";
+    import TransparentButton from "$lib/ui/buttons/transparent-button.svelte";
     import { commands } from "$lib/bindings";
-    import PlayButtonRed from "$lib/ui/play-button-red.svelte";
+    import PlayButtonRed from "$lib/ui/buttons/play-button-red.svelte";
     import PlayIcon from "$lib/icons/play-icon.svelte";
     import ShuffleIcon from "$lib/icons/shuffle-icon.svelte";
     import type { Track } from "$lib/bindings";

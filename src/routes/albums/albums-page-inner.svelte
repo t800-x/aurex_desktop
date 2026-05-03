@@ -6,7 +6,7 @@
     import AlbumCard from "../albums/album-card.svelte";
     import AlbumView from "../albums/album-view.svelte";
     import { getContext } from "svelte";
-    import type { StackContext } from "$lib/ui/stack-view.svelte";
+    import type { StackContext } from "$lib/ui/views/stack-view.svelte";
     import { listen } from "@tauri-apps/api/event";
 
     const { push, pop, canPop } = getContext<StackContext>('stack');

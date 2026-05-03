@@ -4,7 +4,7 @@
     import ArtistsIcon from "$lib/icons/artists-icon.svelte";
     import NavbarItem from "./navbar-item.svelte";
     import NavbarLabel from "./navbar-label.svelte";
-    import { RightPaneContent, router, Section } from "$lib/router.svelte";
+    import { Section } from "$lib/router.svelte";
     import { commands, type Playlist } from "$lib/bindings";
     import { onMount } from "svelte";
     import PlaylistIcon from "$lib/icons/playlist-icon.svelte";
@@ -13,9 +13,8 @@
     import PlusIcon from "$lib/icons/plus-icon.svelte";
     import { listen } from "@tauri-apps/api/event";
     import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
-    import PlaylistContextMenu from "./playlist-context-menu.svelte";
+    import PlaylistContextMenu from "../context_menus/playlist-context-menu.svelte";
     import RecentlyAddedIcon from "$lib/icons/recently-added-icon.svelte";
-    import { event } from "@tauri-apps/api";
     import SettingsIcon from "$lib/icons/settings-icon.svelte";
 
     const width = 268;

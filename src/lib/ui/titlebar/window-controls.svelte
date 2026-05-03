@@ -4,7 +4,6 @@
     import WindowsControls from './windows-controls.svelte';
     import KdeControls from './kde-controls.svelte';
 
-    // type() is synchronous in Tauri v2 — no $effect/$state needed here
     const osType = type();
 </script>
 

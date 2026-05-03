@@ -3,9 +3,8 @@
   import { formatDuration, loadAndPlay } from "$lib/helpers";
   import PlayIcon from "$lib/icons/play-icon.svelte";
   import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
-  import TrackContextMenu from "$lib/ui/track-context-menu.svelte";
   import { convertFileSrc } from "@tauri-apps/api/core";
-    import PlaylistTrackContextMenu from "$lib/ui/playlist-track-context-menu.svelte";
+  import PlaylistTrackContextMenu from "$lib/ui/context_menus/playlist-track-context-menu.svelte";
 
   let {
     track,

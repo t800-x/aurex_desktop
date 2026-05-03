@@ -6,10 +6,8 @@
     import {commands} from "$lib/bindings";
     import { onMount } from "svelte";
     import type { FullTrack } from '$lib/bindings';
-    import { formatDuration } from "$lib/helpers";
     import { VList } from "virtua/svelte";
     import { listen } from "@tauri-apps/api/event";
-    import { event } from "@tauri-apps/api";
 
     const section = Section.songs;
     let hidden = $derived(router.current !== section);
