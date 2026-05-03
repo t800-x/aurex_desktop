@@ -43,6 +43,7 @@
     transition: all 125ms ease;
     box-shadow: none;
     overflow: visible;
+    flex-shrink: 0;
   }
   
   .nav-item:hover {

@@ -5,24 +5,23 @@ use serde::{Deserialize, Serialize};
 use specta::{specta, Type};
 
 pub struct FileMetadata {
-    pub path:         PathBuf,
-    pub title:        Option<String>,
-    pub artist:       Option<String>,
+    pub path: PathBuf,
+    pub title: Option<String>,
+    pub artist: Option<String>,
     pub album_artist: Option<String>,
-    pub album:        Option<String>,
-    pub genre:        Option<String>,
-    pub duration:     Option<i64>,
-    pub year:         Option<i64>,
-    pub track_num:    Option<i64>,
-    pub disc_num:     Option<i64>,
-    pub bpm:          Option<i64>,
-    pub initial_key:  Option<String>,
-    pub isrc:         Option<String>,
-    pub lyrics:       Option<String>,
-    pub composer:     Option<String>,
-    pub cover_path:   Option<PathBuf>
+    pub album: Option<String>,
+    pub genre: Option<String>,
+    pub duration: Option<i64>,
+    pub year: Option<i64>,
+    pub track_num: Option<i64>,
+    pub disc_num: Option<i64>,
+    pub bpm: Option<i64>,
+    pub initial_key: Option<String>,
+    pub isrc: Option<String>,
+    pub lyrics: Option<String>,
+    pub composer: Option<String>,
+    pub cover_path: Option<PathBuf>,
 }
-
 
 // ---------------------------------------------------------------------------
 // Search Result

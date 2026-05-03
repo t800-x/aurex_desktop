@@ -135,6 +135,7 @@
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
+        overflow: hidden;
         overflow-y: auto;
     }
 

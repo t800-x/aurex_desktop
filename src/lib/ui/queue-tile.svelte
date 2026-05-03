@@ -107,7 +107,8 @@
 
 <style>
     .tile {
-        width: 100%;
+        width: calc(100% - 5px);
+        margin-right: 5px;
         display: flex;
         justify-content: flex-start;
         align-items: center;
@@ -163,7 +164,7 @@
         border-radius: 5px;
         border-color: var(--color-divider);
         border-width: 1px;
-        box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
+        box-shadow: 5px 5px 10px 2px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;

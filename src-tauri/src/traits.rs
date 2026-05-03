@@ -1,6 +1,6 @@
-use std::collections::VecDeque;
 use rand::rng;
 use rand::seq::SliceRandom;
+use std::collections::VecDeque;
 
 pub trait Shuffle {
     fn shuffle(&mut self);

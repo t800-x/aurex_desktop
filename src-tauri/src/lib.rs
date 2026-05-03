@@ -3,10 +3,10 @@ mod audio_player;
 mod constants;
 mod error;
 mod library_service;
+mod lyrics;
 mod media_lib_cmd;
 mod metadata;
 mod models;
-mod lyrics;
 mod traits;
 
 use app_state::ManagedState;
@@ -26,9 +26,7 @@ pub fn run() {
         app_state::get_state,
         app_state::increment_click,
         app_state::reset_clicks,
-
         metadata::index,
-
         media_lib_cmd::get_all_tracks,
         media_lib_cmd::get_all_albums,
         media_lib_cmd::get_artist_by_id,
@@ -48,7 +46,6 @@ pub fn run() {
         media_lib_cmd::get_directories,
         media_lib_cmd::add_directory,
         media_lib_cmd::remove_directory,
-
         audio_player::get_player,
         audio_player::play,
         audio_player::load,
@@ -66,9 +63,7 @@ pub fn run() {
         audio_player::shuffle,
         audio_player::previous,
         audio_player::remove_from_queue,
-
         library_service::fulltrack_from_id,
-
         lyrics::get_lyrics
     ]);
 
@@ -82,6 +77,7 @@ pub fn run() {
         .expect("Failed to export bindings");
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {

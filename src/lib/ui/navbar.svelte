@@ -78,19 +78,20 @@
     <NavbarLabel text={"Playlists"} />
     <NewPlaylistButton text="Create Playlist" Icon={PlusIcon} />
 
-    {#if !playlistsEmpty}
-        {#each playlists as playlist}
-            <ContextMenu.Root>
-                <ContextMenu.Trigger style="display: block; width: 100%;">
-                    <NavbarItem Icon={PlaylistIcon} section={`pl-${playlist.id}` as unknown as Section} text={playlist.name} />
-                </ContextMenu.Trigger>
+    <div class="playlists">
+        {#if !playlistsEmpty}
+            {#each playlists as playlist}
+                <ContextMenu.Root>
+                    <ContextMenu.Trigger style="display: block; width: 100%;">
+                        <NavbarItem Icon={PlaylistIcon} section={`pl-${playlist.id}` as unknown as Section} text={playlist.name} />
+                    </ContextMenu.Trigger>
 
-                <PlaylistContextMenu playlist={playlist} />
-            </ContextMenu.Root>
-        {/each}
-    {/if}
+                    <PlaylistContextMenu playlist={playlist} />
+                </ContextMenu.Root>
+            {/each}
+        {/if}
+    </div>
 
-    <div style="flex: 1;"></div>
     <div style="height: 1px; width: calc(100% - 20px); background: var(--color-divider); margin: 4px 0;"></div>
     <NavbarItem text="Settings" Icon={SettingsIcon} section={Section.settings} />
 </div>
@@ -100,7 +101,7 @@
 
     .navbar {
         width: 268px;
-        height: 100vh;
+        height: 100%;
         display: flex;
         flex-direction: column;
         background-color: transparent;
@@ -108,9 +109,20 @@
         justify-content: start;
         padding: 10px;
         gap: 5px;
-        padding-top: 20px;
+        padding-top: 50px;
         overflow-x: hidden;
         overflow-y: auto;
+        flex-shrink: 0;
     }
 
+    .playlists {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        overflow-y: scroll;
+        gap: 5px;
+        align-items: center;
+        justify-content: start;
+    }
 </style>

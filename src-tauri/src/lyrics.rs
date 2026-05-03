@@ -1,6 +1,6 @@
-use std::fs;
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use std::fs;
 
 use crate::models::FullTrack;
 
@@ -13,14 +13,14 @@ pub struct Lyrics {
     pub line_lyrics: Option<Vec<LineLyrics>>,
     pub syllable_lyrics: Option<Vec<SyllableLine>>,
     pub lyricstype: LyricsType,
-    pub multiple_speakers: bool
+    pub multiple_speakers: bool,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, Type)]
 pub enum LyricsType {
     Line,
     Syllable,
-    Unsynced
+    Unsynced,
 }
 
 impl Default for LyricsType {
@@ -220,7 +220,6 @@ fn parse_word_ttml(content: &str) -> Vec<SyllableLine> {
 }
 
 fn check_multiple_speakers(syllable_lines: &Option<Vec<SyllableLine>>) -> bool {
-
     if let Some(lines) = syllable_lines.clone() {
         for line in lines {
             if (line.speaker == 1) || (line.speaker == 2) {
@@ -260,7 +259,13 @@ fn parse_line_ttml(content: &str) -> Vec<LineLyrics> {
             continue;
         }
 
-        lines.push(LineLyrics { start_time, end_time, real_end_time: end_time, line, speaker });
+        lines.push(LineLyrics {
+            start_time,
+            end_time,
+            real_end_time: end_time,
+            line,
+            speaker,
+        });
     }
 
     lines
@@ -270,7 +275,11 @@ fn node_to_word(node: &roxmltree::Node) -> Option<SyllableWord> {
     let start_time = node.attribute("begin").map(parse_time)?;
     let end_time = node.attribute("end").map(parse_time)?;
     let text = collect_text_children(node).to_string();
-    (!text.is_empty()).then_some(SyllableWord { start_time, end_time, text })
+    (!text.is_empty()).then_some(SyllableWord {
+        start_time,
+        end_time,
+        text,
+    })
 }
 
 /// Collect only direct text node children (handles roxmltree's text() being None on elements)
@@ -385,7 +394,13 @@ fn parse_lrc(content: &str) -> (Vec<LineLyrics>, String) {
         .map(|(i, (start, text))| {
             let start_time = (start + offset_sec).max(0.0);
             let end_time = raw.get(i + 1).map(|(ns, _)| (ns + offset_sec).max(0.0));
-            LineLyrics { start_time, end_time, real_end_time: end_time, line: text.clone(), speaker: 0 }
+            LineLyrics {
+                start_time,
+                end_time,
+                real_end_time: end_time,
+                line: text.clone(),
+                speaker: 0,
+            }
         })
         .collect();
 
@@ -409,7 +424,9 @@ fn lrc_timestamps(line: &str) -> Vec<f64> {
     let mut times = Vec::new();
     let mut remaining = line;
     while remaining.starts_with('[') {
-        let Some(close) = remaining.find(']') else { break };
+        let Some(close) = remaining.find(']') else {
+            break;
+        };
         let inner = &remaining[1..close];
         match parse_lrc_timestamp(inner) {
             Some(t) => {
@@ -425,7 +442,9 @@ fn lrc_timestamps(line: &str) -> Vec<f64> {
 fn lrc_strip_timestamps(line: &str) -> &str {
     let mut remaining = line;
     while remaining.starts_with('[') {
-        let Some(close) = remaining.find(']') else { break };
+        let Some(close) = remaining.find(']') else {
+            break;
+        };
         if parse_lrc_timestamp(&remaining[1..close]).is_some() {
             remaining = &remaining[close + 1..];
         } else {

@@ -4,7 +4,11 @@ use std::{
     time::Duration,
 };
 
-use crate::{library_service::library_service, models::{FullTrack, Track}, traits::Shuffle};
+use crate::{
+    library_service::library_service,
+    models::{FullTrack, Track},
+    traits::Shuffle,
+};
 use libaurex::{aurex::Player, enums::EngineSignal};
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -52,7 +56,6 @@ pub fn audio_player() -> &'static Mutex<Arc<Player>> {
 
 pub fn track_progress(app_handle: AppHandle) {
     tauri::async_runtime::spawn(async move {
-
         loop {
             let audio_engine = audio_player().lock().await;
 
@@ -77,7 +80,7 @@ pub enum PlayerState {
 pub enum LoopType {
     LoopOnce,
     LoopOver,
-    Off
+    Off,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, Type)]
@@ -89,7 +92,7 @@ pub struct AudioPlayer {
     real_queue: VecDeque<FullTrack>,
     queue: VecDeque<FullTrack>, // <- This is a proxy
     position: f64,
-    looping: LoopType
+    looping: LoopType,
 }
 
 impl Default for AudioPlayer {
@@ -102,16 +105,20 @@ impl Default for AudioPlayer {
             real_queue: VecDeque::new(),
             queue: VecDeque::new(),
             position: 0.0,
-            looping: LoopType::Off
+            looping: LoopType::Off,
         }
     }
 }
 
 #[tauri::command]
 #[specta::specta]
-pub async fn play_tracks(state: tauri::State<'_, ManagedPlayer>, tracks: Vec<Track>, index: i32) -> Result<AudioPlayer, String> {
+pub async fn play_tracks(
+    state: tauri::State<'_, ManagedPlayer>,
+    tracks: Vec<Track>,
+    index: i32,
+) -> Result<AudioPlayer, String> {
     let mut full_tracks: Vec<FullTrack> = Vec::new();
-    
+
     if let Ok(service) = library_service().lock() {
         //Convert tracks to fulltrack
         for track in tracks {
@@ -161,15 +168,14 @@ pub async fn play(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer,
     let playerstate = state.get().await.state;
 
     if (playerstate != PlayerState::Playing) && (playerstate != PlayerState::Empty) {
-        state.update(|s| {
+        state
+            .update(|s| {
                 s.state = PlayerState::Playing;
             })
             .await;
 
         let player = audio_player().lock().await;
         _ = player.play().await;
-
-        
     }
 
     Ok(state.get().await)
@@ -181,14 +187,14 @@ pub async fn pause(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer
     let player = state.get().await;
 
     if player.state != PlayerState::Paused {
-        state.update(|s| {
+        state
+            .update(|s| {
                 s.state = PlayerState::Paused;
             })
             .await;
 
         let audio_engine = audio_player().lock().await;
         _ = audio_engine.pause().await;
-  
     }
 
     Ok(state.get().await)
@@ -221,25 +227,25 @@ pub async fn play_list(
     mut list: Vec<FullTrack>,
     idx: i32,
 ) -> Result<AudioPlayer, String> {
-
     let mut index = idx as usize;
 
     let first_track = list.remove(index);
     _ = load(state.clone(), first_track).await;
     _ = play(state.clone()).await;
-    
-    state.update(|player| {
-        player.real_queue.clear();
 
-        while index < list.len()  {
-            player.real_queue.push_back(list[index].clone());
-            index += 1;
-        }
+    state
+        .update(|player| {
+            player.real_queue.clear();
 
-        player.queue = player.real_queue.clone();
-        state.update_queue(&player);
+            while index < list.len() {
+                player.real_queue.push_back(list[index].clone());
+                index += 1;
+            }
 
-    }).await;
+            player.queue = player.real_queue.clone();
+            state.update_queue(&player);
+        })
+        .await;
 
     Ok(state.get().await)
 }
@@ -280,8 +286,11 @@ pub async fn add_to_queue(
 
 #[tauri::command]
 #[specta::specta]
-pub async fn add_list_to_queue(state: tauri::State<'_, ManagedPlayer>, fulltracks: Option<Vec<FullTrack>>, tracks: Option<Vec<Track>>) -> Result<AudioPlayer, String> {
-
+pub async fn add_list_to_queue(
+    state: tauri::State<'_, ManagedPlayer>,
+    fulltracks: Option<Vec<FullTrack>>,
+    tracks: Option<Vec<Track>>,
+) -> Result<AudioPlayer, String> {
     if let Some(fulltracks) = fulltracks {
         for track in fulltracks {
             _ = add_to_queue(state.clone(), track).await;
@@ -298,21 +307,24 @@ pub async fn add_list_to_queue(state: tauri::State<'_, ManagedPlayer>, fulltrack
                         temp_track = Some(fulltrack);
                     }
                 }
-            } 
+            }
 
-           if let Some(track) = temp_track {
+            if let Some(track) = temp_track {
                 _ = add_to_queue(state.clone(), track).await;
-           }
+            }
         }
-    } 
+    }
 
     Ok(state.get().await)
 }
 
 #[tauri::command]
 #[specta::specta]
-pub async fn play_list_next(state: tauri::State<'_, ManagedPlayer>, fulltracks: Option<Vec<FullTrack>>, tracks: Option<Vec<Track>>) -> Result<AudioPlayer, String> {
-
+pub async fn play_list_next(
+    state: tauri::State<'_, ManagedPlayer>,
+    fulltracks: Option<Vec<FullTrack>>,
+    tracks: Option<Vec<Track>>,
+) -> Result<AudioPlayer, String> {
     if let Some(fulltracks) = fulltracks {
         for track in fulltracks {
             _ = play_next(state.clone(), track).await;
@@ -329,13 +341,13 @@ pub async fn play_list_next(state: tauri::State<'_, ManagedPlayer>, fulltracks: 
                         temp_track = Some(fulltrack);
                     }
                 }
-            } 
+            }
 
-           if let Some(track) = temp_track {
+            if let Some(track) = temp_track {
                 _ = play_next(state.clone(), track).await;
-           }
+            }
         }
-    } 
+    }
 
     Ok(state.get().await)
 }
@@ -345,20 +357,24 @@ pub async fn play_list_next(state: tauri::State<'_, ManagedPlayer>, fulltracks: 
 pub async fn next(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer, String> {
     let mut track: Option<FullTrack> = None;
 
-    state.update(|player| {
-        if let Some(current) = player.currently_playing.clone() {
-            player.history.push_back(current);
-        }
+    state
+        .update(|player| {
+            if let Some(current) = player.currently_playing.clone() {
+                player.history.push_back(current);
+            }
 
-        track = player.queue.pop_front();
+            track = player.queue.pop_front();
 
-        if let Some(ref t) = track {
-            player.real_queue.retain(|m| m.track.id.unwrap_or(-1) != t.track.id.unwrap_or(-2));
-        }
+            if let Some(ref t) = track {
+                player
+                    .real_queue
+                    .retain(|m| m.track.id.unwrap_or(-1) != t.track.id.unwrap_or(-2));
+            }
 
-        state.update_queue(&player);
-        state.update_history(&player);
-    }).await;
+            state.update_queue(&player);
+            state.update_history(&player);
+        })
+        .await;
 
     if let Some(t) = track {
         _ = load(state.clone(), t).await;
@@ -373,19 +389,21 @@ pub async fn next(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer,
 pub async fn previous(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer, String> {
     let mut track: Option<FullTrack> = None;
 
-    state.update(|player| {
-        track = player.history.pop_back();
+    state
+        .update(|player| {
+            track = player.history.pop_back();
 
-        if track.is_some() {
-            if let Some(current) = player.currently_playing.clone() {
-                player.queue.push_front(current.clone());
-                player.real_queue.push_front(current);
+            if track.is_some() {
+                if let Some(current) = player.currently_playing.clone() {
+                    player.queue.push_front(current.clone());
+                    player.real_queue.push_front(current);
+                }
+
+                state.update_queue(&player);
+                state.update_history(&player);
             }
-
-            state.update_queue(&player);
-            state.update_history(&player);
-        }
-    }).await;
+        })
+        .await;
 
     if let Some(t) = track {
         _ = load(state.clone(), t).await;
@@ -428,14 +446,18 @@ pub async fn change_queue_index(
 
 #[tauri::command]
 #[specta::specta]
-pub async fn remove_from_queue(state: tauri::State<'_, ManagedPlayer>, index: i32) -> Result<AudioPlayer, String> {
+pub async fn remove_from_queue(
+    state: tauri::State<'_, ManagedPlayer>,
+    index: i32,
+) -> Result<AudioPlayer, String> {
+    state
+        .update(|player| {
+            player.real_queue.remove(index as usize);
+            player.queue.remove(index as usize);
 
-    state.update(|player| {
-        player.real_queue.remove(index as usize);
-        player.queue.remove(index as usize);
-
-        state.update_queue(&player); 
-    }).await;
+            state.update_queue(&player);
+        })
+        .await;
 
     Ok(state.get().await)
 }
@@ -450,19 +472,19 @@ pub async fn seek(time: f64) {
 #[tauri::command]
 #[specta::specta]
 pub async fn shuffle(state: tauri::State<'_, ManagedPlayer>) -> Result<AudioPlayer, String> {
-    state.update(|player| {
-        player.queue.clone_from(&player.real_queue);
-        if !player.shuffle {
-            player.queue.shuffle();
-        }
-        player.shuffle = !player.shuffle;
-        state.update_queue(&player);
-    }).await;
+    state
+        .update(|player| {
+            player.queue.clone_from(&player.real_queue);
+            if !player.shuffle {
+                player.queue.shuffle();
+            }
+            player.shuffle = !player.shuffle;
+            state.update_queue(&player);
+        })
+        .await;
 
     Ok(state.get().await)
 }
-
-
 
 pub struct ManagedPlayer {
     pub player: Arc<Mutex<AudioPlayer>>,
@@ -483,17 +505,17 @@ impl ManagedPlayer {
     {
         let mut audio_player = self.player.lock().await;
         updater(&mut *&mut audio_player);
-        
+
         let new_audio_player = AudioPlayer {
             real_queue: VecDeque::new(),
             queue: VecDeque::new(),
             history: VecDeque::new(),
-            
+
             currently_playing: audio_player.currently_playing.clone(),
             shuffle: audio_player.shuffle.clone(),
             state: audio_player.state.clone(),
             position: audio_player.position.clone(),
-            looping: audio_player.looping.clone()
+            looping: audio_player.looping.clone(),
         };
 
         //sending the payload without the queue data for now cause it can get big and cause slowdowns

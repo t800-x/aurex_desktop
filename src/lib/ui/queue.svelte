@@ -93,7 +93,9 @@
 
 <style>
     .queueContainer {
-        padding: 15px;
+        padding: 10px;
+        padding-right: 0px;
+        box-sizing: border-box;
         flex: 1;
         overflow: hidden;
         height: 100%;

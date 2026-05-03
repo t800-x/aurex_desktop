@@ -18,6 +18,7 @@
   import { commands } from "$lib/bindings";
   import SettingsPage from "./settings/settings-page.svelte";
   import OnboardingDialog from "$lib/ui/onboarding-dialog.svelte";
+    import Titlebar from "$lib/ui/titlebar.svelte";
 
 
   let blocked = $derived(
@@ -35,8 +36,9 @@
 </script>
 
 <div class="appRoot dark">
-  <Navbar />
+  <Titlebar />
   <div class="contentWrapper">
+    <Navbar />
     <main class="mainContent" class:blocked>
       <RecentlyAddedPage />
       <SongsPage />
@@ -82,6 +84,7 @@
     overflow: hidden;
     height: 100%;
     position: relative;
+    padding-left: 10px;
   }
 
   .mainContent.blocked {

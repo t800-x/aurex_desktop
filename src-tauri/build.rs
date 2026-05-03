@@ -4,10 +4,11 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const FFMPEG_VERSION: &str = "7.1.1";
-const FFMPEG_RELEASE_URL: &str = "https://github.com/libaurex/libaurex-rs/releases/download/dev/ffmpeg.zip";
+const FFMPEG_RELEASE_URL: &str =
+    "https://github.com/libaurex/libaurex-rs/releases/download/dev/ffmpeg.zip";
 
 fn link_ffmpeg() {
-     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=build.rs");
 
     if env::var("CARGO_CFG_TARGET_OS").unwrap() != "windows" {
         return;
@@ -21,7 +22,7 @@ fn link_ffmpeg() {
 
     if !stamp.exists() {
         eprintln!("FFmpeg libs missing. Grabbing them now...");
-        
+
         if vendor_dir.exists() {
             let _ = fs::remove_dir_all(&vendor_dir);
         }
@@ -30,13 +31,18 @@ fn link_ffmpeg() {
         let zip_path = vendor_dir.join("ffmpeg.zip");
         download_file(FFMPEG_RELEASE_URL, &zip_path);
         extract_zip(&zip_path, &vendor_dir);
-        
+
         let _ = fs::remove_file(&zip_path);
 
         // Sanity check: Did the extraction actually put files where we expect?
         let ffmpeg_libs = [
-            "avcodec", "avdevice", "avfilter", "avformat", 
-            "avutil", "swresample", "swscale"
+            "avcodec",
+            "avdevice",
+            "avfilter",
+            "avformat",
+            "avutil",
+            "swresample",
+            "swscale",
         ];
 
         for lib in &ffmpeg_libs {
@@ -57,16 +63,37 @@ fn link_ffmpeg() {
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
 
     for lib in &[
-        "avcodec", "avdevice", "avfilter", "avformat", 
-        "avutil", "swresample", "swscale"
+        "avcodec",
+        "avdevice",
+        "avfilter",
+        "avformat",
+        "avutil",
+        "swresample",
+        "swscale",
     ] {
         println!("cargo:rustc-link-lib=static={}", lib);
     }
 
     let system_libs = [
-        "bcrypt", "ws2_32", "secur32", "user32", "ole32", "crypt32", "gdi32",
-        "d3d11", "d3d12", "dxva2", "d3dcompiler", "dxguid", "mfplat", "mfuuid",
-        "mf", "mfreadwrite", "strmiids", "uuid", "oleaut32",
+        "bcrypt",
+        "ws2_32",
+        "secur32",
+        "user32",
+        "ole32",
+        "crypt32",
+        "gdi32",
+        "d3d11",
+        "d3d12",
+        "dxva2",
+        "d3dcompiler",
+        "dxguid",
+        "mfplat",
+        "mfuuid",
+        "mf",
+        "mfreadwrite",
+        "strmiids",
+        "uuid",
+        "oleaut32",
     ];
     for lib in system_libs {
         println!("cargo:rustc-link-lib={}", lib);
@@ -74,7 +101,11 @@ fn link_ffmpeg() {
 }
 
 fn download_file(url: &str, dest: &Path) {
-    let cmd = format!("Invoke-WebRequest -Uri '{}' -OutFile '{}'", url, dest.display());
+    let cmd = format!(
+        "Invoke-WebRequest -Uri '{}' -OutFile '{}'",
+        url,
+        dest.display()
+    );
     let status = Command::new("powershell")
         .args(["-NoProfile", "-Command", &cmd])
         .status()

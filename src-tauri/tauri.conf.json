@@ -16,7 +16,8 @@
         "width": 1400,
         "height": 800,
         "backgroundColor": "#202020",
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "decorations": false
       }
     ],
     "security": {

@@ -27,7 +27,7 @@ pub fn library_service() -> &'static Mutex<LibraryService> {
 pub async fn fulltrack_from_id(id: i32) -> Option<FullTrack> {
     if let Ok(library) = library_service().lock() {
         if let Ok(result) = library.get_full_track_by_id(id.into()) {
-           return result; 
+            return result;
         }
     }
 
@@ -267,7 +267,8 @@ impl LibraryService {
         let conn = self.lock();
         let mut stmt = conn.prepare("SELECT path FROM directories")?;
         let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
-        rows.map(|r| r.map_err(Into::into).map(PathBuf::from)).collect()
+        rows.map(|r| r.map_err(Into::into).map(PathBuf::from))
+            .collect()
     }
 
     pub fn delete_directory(&self, path: &str) -> Result<()> {
@@ -277,7 +278,7 @@ impl LibraryService {
     }
 
     pub fn add_directory(&self, path: &str) -> Result<()> {
-       let conn = self.lock();
+        let conn = self.lock();
         conn.execute(
             "INSERT INTO directories (path) SELECT ?1 \
              WHERE NOT EXISTS (SELECT 1 FROM directories WHERE path = ?1)",

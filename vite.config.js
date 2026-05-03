@@ -7,6 +7,9 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
+  build: {
+    assetsInlineLimit: 0, // This forces Vite to treat all SVGs as separate files
+  },
   plugins: [tailwindcss(), sveltekit()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

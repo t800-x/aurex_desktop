@@ -56,12 +56,12 @@
     overflow: hidden;
     height: 100%;
     background-color: var(--color-header);
-    border-left: 1px solid rgba(255, 255, 255, 0.08);
     transition: width 0.3s ease;
     flex-shrink: 0;
     backdrop-filter: var(--blur-vibrance);
   }
   .rightPane.open {
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
     width: 320px;
   }
   .rightPane.overlay {
@@ -69,11 +69,11 @@
     right: 0;
     top: 0;
     z-index: 20;
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
   }
   .rightPane.overlay.open {
     width: min(320px, 85vw);
     box-shadow: 0 5px 10px 2px rgba(0, 0, 0, 0.3);
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
   }
   .rightPaneInner {
     width: 320px;

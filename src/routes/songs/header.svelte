@@ -35,7 +35,7 @@
     .header {
         height: 100px;
         flex-shrink: 0;
-        width: calc(100% - 10px);
+        width: calc(100% - 8px);
         border-bottom: 1px solid var(--color-divider);
         border-radius: 8px;
         display: flex;
@@ -46,6 +46,7 @@
         top: 0;
         z-index: 100;
         backdrop-filter: var(--blur-vibrance);
+        border-top-right-radius: 0px;
     }
 
     .title {

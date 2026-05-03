@@ -1,17 +1,17 @@
+use crate::constants;
+use crate::constants::cover_cache;
+use crate::library_service::{library_service, LibraryService};
+use crate::models::FileMetadata;
 use lofty::picture::PictureType;
 use lofty::prelude::*;
 use lofty::probe::Probe;
-use tauri::{AppHandle, Emitter};
-use walkdir::WalkDir;
-use crate::models::FileMetadata;
-use crate::constants;
-use crate::constants::cover_cache;
-use crate::library_service::{LibraryService, library_service};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::collections::{HashSet, VecDeque};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use tauri::{AppHandle, Emitter};
+use walkdir::WalkDir;
 
 #[tauri::command]
 #[specta::specta]
@@ -45,8 +45,11 @@ pub fn index_tracks() {
 
     let service = library_service();
     let guard = match service.lock() {
-        Ok(g)  => g,
-        Err(e) => { eprintln!("Mutex poisoned: {:?}", e); return; }
+        Ok(g) => g,
+        Err(e) => {
+            eprintln!("Mutex poisoned: {:?}", e);
+            return;
+        }
     };
 
     for meta in parsed {
@@ -62,7 +65,7 @@ fn parse_and_write_cover(file: PathBuf) -> Option<FileMetadata> {
 
     let tag = match tagged_file.primary_tag() {
         Some(t) => t,
-        None    => tagged_file.first_tag()?,
+        None => tagged_file.first_tag()?,
     };
 
     let props = tagged_file.properties();
@@ -82,7 +85,8 @@ fn parse_and_write_cover(file: PathBuf) -> Option<FileMetadata> {
         .find(|p| p.pic_type() == PictureType::CoverFront)
         .or_else(|| tag.pictures().first())
         .and_then(|pic| {
-            let ext = pic.mime_type()
+            let ext = pic
+                .mime_type()
                 .and_then(|m| m.as_str().split('/').last().map(str::to_owned))
                 .unwrap_or_else(|| "jpg".to_owned());
 
@@ -109,26 +113,29 @@ fn parse_and_write_cover(file: PathBuf) -> Option<FileMetadata> {
                         Some(out)
                     }
                 }
-                Err(e) => { eprintln!("{}", e); None }
+                Err(e) => {
+                    eprintln!("{}", e);
+                    None
+                }
             }
         });
 
     Some(FileMetadata {
         path: file,
-        title:        tag.title().map(|s| s.to_string()),
-        artist:       tag.artist().map(|s| s.to_string()),
+        title: tag.title().map(|s| s.to_string()),
+        artist: tag.artist().map(|s| s.to_string()),
         album_artist: tag.get_string(ItemKey::AlbumArtist).map(str::to_owned),
-        album:        tag.album().map(|s| s.to_string()),
-        genre:        tag.genre().map(|s| s.to_string()),
-        duration:     Some(props.duration().as_secs() as i64),
+        album: tag.album().map(|s| s.to_string()),
+        genre: tag.genre().map(|s| s.to_string()),
+        duration: Some(props.duration().as_secs() as i64),
         year,
-        track_num:    parse_tag(ItemKey::TrackNumber),
-        disc_num:     parse_tag(ItemKey::DiscNumber),
-        bpm:          parse_tag(ItemKey::Bpm),
-        initial_key:  tag.get_string(ItemKey::InitialKey).map(str::to_owned),
-        isrc:         tag.get_string(ItemKey::Isrc).map(str::to_owned),
-        lyrics:       tag.get_string(ItemKey::Lyrics).map(str::to_owned),
-        composer:     tag.get_string(ItemKey::Composer).map(str::to_owned),
+        track_num: parse_tag(ItemKey::TrackNumber),
+        disc_num: parse_tag(ItemKey::DiscNumber),
+        bpm: parse_tag(ItemKey::Bpm),
+        initial_key: tag.get_string(ItemKey::InitialKey).map(str::to_owned),
+        isrc: tag.get_string(ItemKey::Isrc).map(str::to_owned),
+        lyrics: tag.get_string(ItemKey::Lyrics).map(str::to_owned),
+        composer: tag.get_string(ItemKey::Composer).map(str::to_owned),
         cover_path,
     })
 }
@@ -136,13 +143,19 @@ fn parse_and_write_cover(file: PathBuf) -> Option<FileMetadata> {
 fn index_file_to_db(guard: &LibraryService, meta: FileMetadata) {
     let path_str = match meta.path.to_str() {
         Some(s) => s,
-        None => { eprintln!("Path is not valid UTF-8"); return; }
+        None => {
+            eprintln!("Path is not valid UTF-8");
+            return;
+        }
     };
 
     match guard.is_track_in_library(path_str) {
-        Ok(true)   => return,
-        Ok(false)  => {}
-        Err(e)     => { eprintln!("Library check failed: {:?}", e); return; }
+        Ok(true) => return,
+        Ok(false) => {}
+        Err(e) => {
+            eprintln!("Library check failed: {:?}", e);
+            return;
+        }
     }
 
     if let Err(e) = guard.add_track_with_metadata(
@@ -171,7 +184,10 @@ fn index_file_to_db(guard: &LibraryService, meta: FileMetadata) {
     if let Some(temp_cover) = meta.cover_path {
         match guard.get_album_id_by_path(path_str) {
             Ok(Some(id)) => {
-                let ext = temp_cover.extension().and_then(|e| e.to_str()).unwrap_or("jpg");
+                let ext = temp_cover
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("jpg");
                 let final_path = cover_cache().join(format!("{}.{}", id, ext));
                 if let Err(e) = std::fs::rename(&temp_cover, &final_path) {
                     eprintln!("Failed to rename cover: {}", e);
@@ -180,7 +196,7 @@ fn index_file_to_db(guard: &LibraryService, meta: FileMetadata) {
                 }
             }
             Ok(None) => eprintln!("No album ID for {}", path_str),
-            Err(e)   => eprintln!("{}", e),
+            Err(e) => eprintln!("{}", e),
         }
     }
 }
@@ -210,8 +226,13 @@ pub fn index_playlists() {
         for audio_file in audio_files {
             if let Ok(library) = library_service().lock() {
                 if let Some(p_id) = playlist_id {
-                    if !library.is_track_in_playlist(p_id, audio_file.to_str().unwrap_or("")).unwrap_or(false) {
-                        if let Some(track_id) = library.get_track_id_by_path(audio_file.to_str().unwrap()) {
+                    if !library
+                        .is_track_in_playlist(p_id, audio_file.to_str().unwrap_or(""))
+                        .unwrap_or(false)
+                    {
+                        if let Some(track_id) =
+                            library.get_track_id_by_path(audio_file.to_str().unwrap())
+                        {
                             _ = library.add_track_to_playlist(p_id, track_id);
                         }
                     }
