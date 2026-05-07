@@ -209,8 +209,8 @@
 
   $effect(() => {
     const tracksMatched =
-      JSON.stringify(localTrack) ===
-      JSON.stringify(audioPlayer.currentlyPlaying);
+      localTrack?.track.id ===
+      audioPlayer.currentlyPlaying?.track.id;
     if (tracksMatched) return;
 
     localTrack = audioPlayer.currentlyPlaying;
@@ -304,6 +304,10 @@
     height: 100%;
     width: 100%;
     position: relative;
+
+
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
   .lyricsInner {
@@ -325,6 +329,9 @@
     height: 100%;
     width: 100%;
     box-sizing: border-box;
+
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
   }
 
   .unsyncedLine {

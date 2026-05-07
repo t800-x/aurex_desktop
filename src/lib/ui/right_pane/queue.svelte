@@ -64,7 +64,7 @@
     }
   }}
 >
-  Queue
+  <div>Queue</div>
 
   <div class="listWrapper">
     <div class="h-[10px]"></div>
@@ -118,5 +118,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: 15px;
   }
 </style>

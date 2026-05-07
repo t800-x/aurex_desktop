@@ -27,6 +27,8 @@ class Router {
   isCreatePlaylistDialogOpen = $state(false);
   trackToAddAfterCreating = $state<FullTrack | null>(null);
 
+  fullscreen = $state(false);
+
   isDeletePlaylistDialogOpen = $state(false);
   pendingDeletePlaylist = $state<Playlist | null>(null);
 

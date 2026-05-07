@@ -19,6 +19,7 @@
   import SettingsPage from "./settings/settings-page.svelte";
   import OnboardingDialog from "$lib/ui/dialogs/onboarding-dialog.svelte";
   import Titlebar from "$lib/ui/titlebar/titlebar.svelte";
+    import FullScreenPlayer from "$lib/ui/full_screen/full-screen-player.svelte";
 
   let { children } = $props();
 
@@ -57,6 +58,10 @@
   <CreatePlaylistDialog />
   <DeletePlaylistDialog />
   <OnboardingDialog />
+
+  {#if router.fullscreen}
+    <FullScreenPlayer />
+  {/if}
 
   <div style="display: none;">{@render children()}</div>
 </div>

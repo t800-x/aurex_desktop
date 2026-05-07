@@ -12,13 +12,20 @@
   import PoppingButton from "../buttons/popping-button.svelte";
 
   let isPlaying = $derived(audioPlayer.state == PlayerState.Playing);
+
+  let {
+    big = false
+  } : {
+    big?: boolean;
+  } = $props();
 </script>
 
-<div class="playbackControls">
+<div class="playbackControls" class:bigVar={big}>
   <button
     class="playbackControlButton secondaryControl shuffleBtn"
     class:enabledControl={audioPlayer.shuffle}
     onclick={() => commands.shuffle()}
+    class:bigVar={big}
   >
     <ShuffleIcon size={18.5} />
     {#if audioPlayer.shuffle}
@@ -30,6 +37,7 @@
     class="playbackControlButton primaryControl"
     onclick={() => commands.previous()}
     class:disabledControl={audioPlayer.history.length === 0}
+    class:bigVar={big}
   >
     <PoppingButton>
       <PreviousIcon />
@@ -39,6 +47,7 @@
   <button
     onclick={async () => (isPlaying ? commands.pause() : commands.play())}
     class="playbackControlButton primaryControl"
+    class:bigVar={big}
   >
     {#if isPlaying}
       <PoppingButton>
@@ -55,13 +64,14 @@
     class="playbackControlButton primaryControl"
     onclick={async () => commands.next()}
     class:disabledControl={audioPlayer.queue.length === 0}
+    class:bigVar={big}
   >
     <PoppingButton>
       <NextIcon />
     </PoppingButton>
   </button>
 
-  <button class="playbackControlButton secondaryControl">
+  <button class="playbackControlButton secondaryControl" class:bigVar={big}>
     <LoopIcon size={18.5} />
   </button>
 </div>
@@ -137,5 +147,15 @@
     background-color: var(--color-accent);
     position: absolute;
     bottom: 3px;
+  }
+
+  .bigVar {
+    width: 100%;
+  }
+
+  .bigVar.playbackControlButton {
+    flex: 2;
+    border-radius: 50%;
+    padding: 9%;
   }
 </style>

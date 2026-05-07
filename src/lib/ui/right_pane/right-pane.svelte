@@ -53,6 +53,7 @@
     background-color: var(--color-header);
     transition: width 0.3s ease;
     flex-shrink: 0;
+    margin-top: 30px;
     backdrop-filter: var(--blur-vibrance);
   }
   .rightPane.open {

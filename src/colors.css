@@ -8,7 +8,7 @@
   --color-accent-dark: #fa2d48;
   --color-page-background: rgb(31, 31, 31);
   --color-divider: rgb(59, 59, 60);
-  --color-navbar-label: rgb(176, 176, 177);
+  --color-navbar-label: rgba(235, 235, 245, 0.6);
 
   --blur-vibrance: blur(25px) saturate(160%) brightness(0.8);
   --shadow-floating: 0 2px 4px rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.3);

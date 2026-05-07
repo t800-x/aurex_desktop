@@ -10,12 +10,21 @@
     "opener:default",
     "core:image:allow-from-path",
     "fs:default",
+    "fs:allow-read-file",
     "dialog:default",
     "core:window:default",
     "core:window:allow-start-dragging",
     "core:window:allow-toggle-maximize",
     "core:window:allow-close",
     "core:window:allow-minimize",
-    "os:default"
+    "os:default",
+
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "C:\\Users\\**" },
+        { "path": "$HOME/**" }
+      ]
+    }
   ]
 }
