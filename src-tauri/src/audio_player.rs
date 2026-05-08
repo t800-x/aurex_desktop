@@ -116,22 +116,27 @@ pub async fn play_tracks(
     state: tauri::State<'_, ManagedPlayer>,
     tracks: Vec<Track>,
     index: i32,
+    shuffle: bool
 ) -> Result<AudioPlayer, String> {
-    let mut full_tracks: Vec<FullTrack> = Vec::new();
+    let mut full_tracks: VecDeque<FullTrack> = VecDeque::new();
 
     if let Ok(service) = library_service().lock() {
         //Convert tracks to fulltrack
         for track in tracks {
             if let Ok(ft_option) = service.get_full_track_by_id(track.id.unwrap()) {
                 if let Some(full_track) = ft_option {
-                    full_tracks.push(full_track);
+                    full_tracks.push_back(full_track);
                 }
             }
         }
     }
 
     if !full_tracks.is_empty() {
-        _ = play_list(state.clone(), full_tracks, index).await;
+        if shuffle {
+            full_tracks.shuffle();
+        }
+
+        _ = play_list(state.clone(), Vec::from(full_tracks), index).await;
     }
 
     Ok(state.get().await)

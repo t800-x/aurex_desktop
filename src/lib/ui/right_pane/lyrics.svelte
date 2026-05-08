@@ -8,7 +8,6 @@
   } from "$lib/bindings";
   import { audioPlayer } from "$lib/player.svelte";
   import LyricLine from "./lyric-line.svelte";
-  import LyricGap from "./lyric-gap.svelte";
 
   let lyrics = $state<Lyrics | null>(null);
   let localTrack = $state<FullTrack | null>(null);

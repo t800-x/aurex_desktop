@@ -92,14 +92,17 @@
       <div class="play">
         <PlayButtonRed
           onclick={() => {
-            commands.playTracks(tracks, 0);
+            commands.playTracks(tracks, 0, false);
           }}
         >
           <PlayIcon size={20} />
           <span>Play</span>
         </PlayButtonRed>
 
-        <PlayButtonRed onclick={() => {}}>
+        <PlayButtonRed 
+          onclick={() => {
+            commands.playTracks(tracks, 0, true);
+          }}>
           <ShuffleIcon size={20} />
           <span>Shuffle</span>
         </PlayButtonRed>

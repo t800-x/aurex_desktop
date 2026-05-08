@@ -172,9 +172,9 @@ async pause() : Promise<Result<AudioPlayer, string>> {
 async seek(time: number) : Promise<void> {
     await TAURI_INVOKE("seek", { time });
 },
-async playTracks(tracks: Track[], index: number) : Promise<Result<AudioPlayer, string>> {
+async playTracks(tracks: Track[], index: number, shuffle: boolean) : Promise<Result<AudioPlayer, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("play_tracks", { tracks, index }) };
+    return { status: "ok", data: await TAURI_INVOKE("play_tracks", { tracks, index, shuffle }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
