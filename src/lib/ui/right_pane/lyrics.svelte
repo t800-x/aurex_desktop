@@ -17,10 +17,11 @@
   let innerEl: HTMLDivElement | null = $state(null);
   let scrollOffset = 0;
 
-  // isUserScrolling stays true through the entire snap-back animation so that
-  // line-change effects don't fire updateScroll mid-pan and fight the transition.
   let isUserScrolling = $state(false);
   let userScrollTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  let activeIndex = $state(-1);
+  let nextTimer: ReturnType<typeof setTimeout> | null = null;
 
   let lineItems = $derived<LineLyrics[]>(
     !lyrics || lyrics.lyricstype !== "Line" || !lyrics.line_lyrics
@@ -52,33 +53,102 @@
         }),
   );
 
-  let activeIndices = $derived(
-    (() => {
-      const items =
-        lyrics?.lyricstype === "Syllable" ? syllableItems : lineItems;
-      return items.reduce<number[]>((acc, line, i) => {
-        const nextStart = items[i + 1]?.start_time;
-        let effectiveEnd;
-        if (nextStart !== undefined) {
-          effectiveEnd =
-            line.end_time != null
-              ? Math.max(line.end_time, nextStart)
-              : nextStart;
-        } else {
-          effectiveEnd = line.end_time ?? Infinity;
-        }
-        if (
-          audioPlayer.position >= line.start_time &&
-          audioPlayer.position < effectiveEnd
-        ) {
-          acc.push(i);
-        }
-        return acc;
-      }, []);
-    })(),
-  );
+  function getItems() {
+    return lyrics?.lyricstype === "Syllable" ? syllableItems : lineItems;
+  }
 
-  let scrollTargetIndex = $derived(activeIndices[0] ?? -1);
+  function computeEffectiveEnd(
+    items: LineLyrics[] | SyllableLine[],
+    i: number,
+  ): number {
+    const item = items[i];
+    const nextStart = items[i + 1]?.start_time;
+    if (nextStart !== undefined) {
+      return item.end_time != null
+        ? Math.max(item.end_time, nextStart)
+        : nextStart;
+    }
+    return item.end_time ?? Infinity;
+  }
+
+  function scheduleActiveIndex() {
+    if (nextTimer) {
+      clearTimeout(nextTimer);
+      nextTimer = null;
+    }
+
+    const items = getItems();
+    if (!items.length) {
+      activeIndex = -1;
+      return;
+    }
+
+    // read position once, not as a reactive dependency
+    const now = audioPlayer.position;
+
+    // binary search for the last item whose start_time <= now
+    let lo = 0,
+      hi = items.length - 1,
+      found = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (items[mid].start_time <= now) {
+        found = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    // make sure it hasn't already ended
+    if (found !== -1) {
+      const effectiveEnd = computeEffectiveEnd(items, found);
+      if (now >= effectiveEnd) found = -1;
+    }
+
+    activeIndex = found;
+
+    // schedule next wake-up at the next line boundary
+    let nextBoundary: number | undefined;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].start_time > now) {
+        nextBoundary = items[i].start_time;
+        break;
+      }
+    }
+
+    // also wake up at the effective end of the current line if it
+    // ends before the next line starts (gap between lines)
+    if (found !== -1) {
+      const effectiveEnd = computeEffectiveEnd(items, found);
+      if (isFinite(effectiveEnd)) {
+        nextBoundary =
+          nextBoundary !== undefined
+            ? Math.min(nextBoundary, effectiveEnd)
+            : effectiveEnd;
+      }
+    }
+
+    if (nextBoundary !== undefined) {
+      const delay = Math.max(0, (nextBoundary - now) * 1000);
+      nextTimer = setTimeout(scheduleActiveIndex, delay);
+    }
+  }
+
+  // re-schedule only when lyrics content changes, not on every position tick
+  $effect(() => {
+    // explicitly depend on syllableItems/lineItems so this fires after
+    // they're recomputed from a new track load
+    syllableItems;
+    lineItems;
+    scheduleActiveIndex();
+    return () => {
+      if (nextTimer) clearTimeout(nextTimer);
+    };
+  });
+
+
+  let scrollTargetIndex = $derived(activeIndex);
   let prevScrollTarget = $state(-1);
 
   function clearItemTransforms() {
@@ -103,11 +173,9 @@
       if (!el) continue;
       el.style.transition = "none";
       el.style.transform = `translateY(${delta}px)`;
+      el.style.willChange = "transform";
     }
 
-    // Always clear any lingering transition from snap-back before moving innerEl,
-    // otherwise the first post-snap updateScroll animates with the 0.65s curve
-    // instead of being instant (which breaks the stagger illusion).
     innerEl.style.transition = "";
     innerEl.style.transform = `translateY(-${scrollOffset}px)`;
 
@@ -119,16 +187,15 @@
         el.style.transition = `transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}ms`;
         el.style.transform = "translateY(0)";
       }
+
+      setTimeout(() => {
+          for (const el of itemEls) {
+              if (el) el.style.willChange = "auto";
+          }
+      }, 600); 
     });
   }
 
-  /**
-   * Smoothly returns to the active lyric line after the user-scroll cooldown.
-   * Keeps isUserScrolling=true through the entire pan so that in-flight line
-   * changes don't call updateScroll and fight the animation.
-   * Only releases control (isUserScrolling=false, prevScrollTarget=-1) once
-   * the transition has landed -- or immediately if the line is already visible.
-   */
   function snapBackToActive() {
     if (scrollTargetIndex === -1 || !listEl || !innerEl) {
       isUserScrolling = false;
@@ -161,15 +228,13 @@
         "transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
       innerEl.style.transform = `translateY(-${scrollOffset}px)`;
 
-      // Release AFTER the pan lands, not before -- keeps updateScroll from
-      // firing mid-transition and leaving innerEl.style.transition dirty.
       innerEl.addEventListener(
         "transitionend",
         () => {
           if (!innerEl) return;
           innerEl.style.transition = "";
           isUserScrolling = false;
-          prevScrollTarget = -1; // $state write -> re-triggers the $effect
+          prevScrollTarget = -1;
         },
         { once: true },
       );
@@ -194,7 +259,6 @@
 
     isUserScrolling = true;
     if (userScrollTimeout) clearTimeout(userScrollTimeout);
-    // snapBackToActive owns the isUserScrolling=false release from here on.
     userScrollTimeout = setTimeout(snapBackToActive, 2000);
   }
 
@@ -208,17 +272,21 @@
 
   $effect(() => {
     const tracksMatched =
-      localTrack?.track.id ===
-      audioPlayer.currentlyPlaying?.track.id;
+      localTrack?.track.id === audioPlayer.currentlyPlaying?.track.id;
     if (tracksMatched) return;
 
     localTrack = audioPlayer.currentlyPlaying;
     lyrics = null;
+    activeIndex = -1;
     scrollOffset = 0;
     isUserScrolling = false;
     if (userScrollTimeout) {
       clearTimeout(userScrollTimeout);
       userScrollTimeout = null;
+    }
+    if (nextTimer) {
+      clearTimeout(nextTimer);
+      nextTimer = null;
     }
     if (innerEl) {
       innerEl.style.transition = "";
@@ -243,7 +311,7 @@
 
 <div class="lyricsContainer">
   {#if !lyrics}
-    <!-- loading / no track, show nothing -->
+    <!-- loading / no track -->
   {:else if lyrics.lyricstype === "Syllable" && syllableItems.length > 0}
     <div bind:this={listEl} class="lyricsDisplay" onwheel={handleWheel}>
       <div bind:this={innerEl} class="lyricsInner">
@@ -253,7 +321,7 @@
               lineLyrics={null}
               hasMultipleSpeakers={lyrics?.multiple_speakers}
               syllableLyrics={syllableLine}
-              active={activeIndices.includes(index)}
+              active={activeIndex === index}
             />
           </div>
         {/each}
@@ -275,7 +343,7 @@
             <LyricLine
               lineLyrics={line}
               syllableLyrics={null}
-              active={activeIndices.includes(index)}
+              active={activeIndex === index}
             />
           </div>
         {/each}
@@ -303,8 +371,6 @@
     height: 100%;
     width: 100%;
     position: relative;
-
-
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
@@ -319,7 +385,6 @@
   .item-wrap {
     display: block;
     width: 100%;
-    will-change: transform;
   }
 
   .unsyncedDisplay {
@@ -328,7 +393,6 @@
     height: 100%;
     width: 100%;
     box-sizing: border-box;
-
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
   }

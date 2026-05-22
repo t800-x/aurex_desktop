@@ -44,8 +44,8 @@
     top: 50%;
     left: 50%;
     translate: -50% -50%;
-    width: 150vmax; 
     height: 150vmax;
+    width: 150vmax; 
     max-width: none;
     object-fit: cover; 
     filter: blur(80px);

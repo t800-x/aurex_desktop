@@ -60,12 +60,11 @@
 
         <div class="additionalPane">
             <div style="height: 60%; width: 85%;">
-                <div style:display={isQueue ? "contents" : "none"}>
-                        <Queue />
-                    </div>
-                    <div style:display={isQueue ? "none" : "contents"}>
-                        <Lyrics />
-                    </div>
+                {#if isQueue}
+                    <Queue />
+                {:else}
+                    <Lyrics />
+                {/if}
                 </div>
             </div>
         </div>
